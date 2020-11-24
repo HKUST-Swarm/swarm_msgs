@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(swarm_msgs)
+project(swarmcomm_msgs)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -14,25 +14,14 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   std_msgs
   sensor_msgs
-  swarmtal_msgs
 )
 
 ## Generate messages in the 'msg' folder
 add_message_files(
-        FILES
-        swarm_fused.msg
-        swarm_fused_relative.msg
-        swarm_remote_command.msg
-        swarm_drone_source_data.msg
-        node_detected_xyzyaw.msg
-        node_frame.msg
-        swarm_frame.msg
-        node_detected.msg
-        swarm_detected.msg
-        swarm_drone_basecoor.msg
-        ImageDescriptor.msg
-        LoopConnection.msg
-        FisheyeFrameDescriptor.msg
+    FILES
+    remote_uwb_info.msg
+    incoming_broadcast_data.msg
+    data_buffer.msg
 )
 
 
@@ -43,7 +32,6 @@ generate_messages(
   geometry_msgs
   std_msgs
   sensor_msgs
-  swarmtal_msgs
 )
 
 
@@ -51,6 +39,7 @@ catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES swarm_msgs
 #  CATKIN_DEPENDS message_generation message_runtime nav_msgs odometry_msgs std_msgs
+#  DEPENDS system_lib
 )
 
 ###########

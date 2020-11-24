@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <geometry_msgs/Pose.h>
+#include "Pose_t.hpp"
 
 using namespace Eigen;
 
@@ -115,6 +116,23 @@ public:
         update_yaw();
     }
 
+
+    Pose(Eigen::Vector3d pos, double yaw) {
+        this->attitude = AngleAxisd(yaw, Vector3d::UnitZ());
+        position = pos;
+        attitude.normalize();
+
+        update_yaw();
+    }
+
+    Pose(Eigen::Vector3d pos, Eigen::Quaterniond att) {
+        this->attitude = att;
+        position = pos;
+        attitude.normalize();
+
+        update_yaw();
+    }
+
     Pose(const geometry_msgs::Pose &p) {
         attitude.w() = p.orientation.w;
         attitude.x() = p.orientation.x;
@@ -126,6 +144,22 @@ public:
         position.z() = p.position.z;
         update_yaw();
     }
+
+    Pose(const Eigen::Matrix3d & R, const Eigen::Vector3d & T) {
+        attitude = R;
+        attitude.normalize();
+        position = T;
+        update_yaw();
+    }
+
+
+    Pose(const Eigen::Quaterniond & Q, const Eigen::Vector3d &T) {
+        attitude = Q;
+        attitude.normalize();
+        position = T;
+        update_yaw();
+    }
+
 
     Pose(double v[], bool xyzyaw = false) {
         if (xyzyaw) {
@@ -144,6 +178,18 @@ public:
         update_yaw();
     }
 
+    Pose(const Pose_t & pose_t) {
+        attitude.x() = pose_t.orientation[0];
+        attitude.y() = pose_t.orientation[1];
+        attitude.z() = pose_t.orientation[2];
+        attitude.w() = pose_t.orientation[3];
+
+        position.x() = pose_t.position[0];
+        position.y() = pose_t.position[1];
+        position.z() = pose_t.position[2];
+        update_yaw();
+    }
+
     geometry_msgs::Pose to_ros_pose() const {
         geometry_msgs::Pose pose;
         pose.orientation.w = attitude.w();
@@ -154,6 +200,10 @@ public:
         pose.position.y = position.y();
         pose.position.z = position.z();
         return pose;
+    }
+
+    Swarm::Pose inverse() const {
+        return Swarm::Pose(this->to_isometry().inverse());
     }
 
     friend Pose operator*(Pose a, Pose b) {
@@ -169,6 +219,10 @@ public:
         //        printf("Res eigen");
         //        p.print();
         return p;
+    }
+
+    friend Eigen::Vector3d operator*(Pose a, Eigen::Vector3d point) {
+        return a.attitude * point + a.position;
     }
 
     //A^-1B
@@ -209,7 +263,7 @@ public:
         return _yaw;
     }
 
-    void print() {
+    void print() const {
         auto _rpy = rpy();
         printf("T %3.3f %3.3f %3.3f RPY %3.1f %3.1f %3.1f\n",
                position.x(), position.y(), position.z(),
@@ -219,6 +273,10 @@ public:
     }
 
     inline Eigen::Vector3d pos() const {
+        return position;
+    }
+
+    inline Eigen::Vector3d & pos() {
         return position;
     }
 
