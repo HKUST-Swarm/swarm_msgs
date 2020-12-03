@@ -4,3 +4,6 @@ int32 remote_drone_id
 geometry_msgs/PoseWithCovariance relpose #If 2d detect, gives x=1
 bool is_2d_detect
 bool is_yaw_valid
+
+geometry_msgs/Pose local_pose_self
+geometry_msgs/Pose local_pose_remote
