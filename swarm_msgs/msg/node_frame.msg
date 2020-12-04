@@ -10,5 +10,3 @@ float32 roll
 bool vo_available
 int32[] dismap_ids
 float64[] dismap_dists
-
-node_detected_xyzyaw[] detected
