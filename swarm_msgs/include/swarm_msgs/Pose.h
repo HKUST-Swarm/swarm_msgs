@@ -161,7 +161,7 @@ public:
     }
 
 
-    Pose(double v[], bool xyzyaw = false) {
+    Pose(const double v[], bool xyzyaw = false) {
         if (xyzyaw) {
             this->attitude = AngleAxisd(v[3], Vector3d::UnitZ());
         } else {
