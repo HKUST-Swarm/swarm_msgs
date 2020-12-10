@@ -36,6 +36,9 @@ inline geometry_msgs::Pose toROSPose(const Pose_t & t) {
 }
 
 
+inline geometry_msgs::Pose toROSPose(const Swarm::Pose & t) {
+    return t.to_ros_pose();
+}
 
 inline void ROSPoints2LCM(const std::vector<geometry_msgs::Point32> & src, std::vector<Point2d_t> & dst) {
     for (auto pt : src) {

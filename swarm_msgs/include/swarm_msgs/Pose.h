@@ -305,4 +305,7 @@ public:
     Pose() {}
 };
 
+typedef std::pair<int64_t, Pose> PoseStamped;
+typedef std::vector<PoseStamped> Path;
+
 } // namespace Swarm
