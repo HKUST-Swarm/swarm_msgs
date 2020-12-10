@@ -265,11 +265,11 @@ public:
 
     void print() const {
         auto _rpy = rpy();
-        printf("T %3.3f %3.3f %3.3f RPY %3.1f %3.1f %3.1f\n",
+        printf("T [%3.3f,%3.3f,%3.3f] YPR [%3.1f,%3.1f,%3.1f]\n",
                position.x(), position.y(), position.z(),
-               _rpy.x() * 57.3,
+               _rpy.z() * 57.3,
                _rpy.y() * 57.3,
-               _rpy.z() * 57.3);
+               _rpy.x() * 57.3);
     }
 
     inline Eigen::Vector3d pos() const {
