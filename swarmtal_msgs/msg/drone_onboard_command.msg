@@ -24,6 +24,9 @@ uint32 CTRL_FORMATION_FLY_0=14
 #Activate fly master's natural frame
 uint32 CTRL_FORMATION_FLY_1=15
 
+uint32 CTRL_SPEC_TRAJS=16
+
+
 uint32 command_type
 #For formation param1 is id
 #Param 2 is submodule
@@ -44,6 +47,14 @@ uint32 command_type
 # For TAKEoff param 1 is takeoff height * 10000
 # For arm param = 0 is disarm param>0 is arm
 # For mission param1-7 is  mission id
+
+#For Spec traj, 
+# param1 is spec traj type 0 is disable. 1 is 8. 
+# param2 if enable yaw
+# param3 T*10000
+# param4 ox * 10000
+# param5 oy * 10000
+# param6 oz * 10000
 
 int32 param1
 int32 param2
