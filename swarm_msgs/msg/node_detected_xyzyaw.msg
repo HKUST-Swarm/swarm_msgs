@@ -11,5 +11,5 @@ bool is_yaw_valid
 float64 probaility
 float64 inv_dep
 
-geometry_msgs/Pose local_pose_self
+geometry_msgs/Pose local_pose_self #Here is camera pose, not IMU pose.
 geometry_msgs/Pose local_pose_remote
