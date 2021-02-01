@@ -13,3 +13,5 @@ float64 inv_dep
 
 geometry_msgs/Pose local_pose_self #Here is camera pose, not IMU pose.
 geometry_msgs/Pose local_pose_remote
+
+geometry_msgs/Pose camera_extrinsic
