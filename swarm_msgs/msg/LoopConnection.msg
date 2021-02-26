@@ -6,3 +6,6 @@ geometry_msgs/Point dpos
 float64 dyaw
 geometry_msgs/Pose self_pose_a
 geometry_msgs/Pose self_pose_b
+
+#Details for loop
+int32 pnp_inlier_num

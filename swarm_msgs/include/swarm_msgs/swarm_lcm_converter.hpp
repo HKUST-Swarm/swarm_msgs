@@ -184,6 +184,7 @@ inline swarm_msgs::LoopConnection toROSLoopConnection(const LoopConnection_t & l
 
     loop_conn.self_pose_a = toROSPose(loop_con.self_pose_a);
     loop_conn.self_pose_b = toROSPose(loop_con.self_pose_b);
+    loop_conn.pnp_inlier_num = loop_con.pnp_inlier_num;
 
     return loop_conn;
 }
@@ -200,6 +201,7 @@ inline LoopConnection_t toLCMLoopConnection(const swarm_msgs::LoopConnection & l
     loop_conn.dpos.y = loop_con.dpos.y;
     loop_conn.dpos.z = loop_con.dpos.z;
     loop_conn.dyaw = loop_con.dyaw;
+    loop_conn.pnp_inlier_num = loop_con.pnp_inlier_num;
 
 
     loop_conn.self_pose_a = fromROSPose(loop_con.self_pose_a);
