@@ -90,6 +90,10 @@ public:
         return attitude * point + position;
     }
 
+    Eigen::Vector3d apply_inv_pose_to(Eigen::Vector3d point) const {
+        return attitude.inverse() * (point - position);
+    }
+
     Eigen::Vector3d rpy() const {
         return quat2eulers(attitude);
     }
