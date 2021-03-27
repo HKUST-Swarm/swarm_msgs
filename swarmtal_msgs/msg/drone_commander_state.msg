@@ -21,6 +21,7 @@ uint32 control_auth
 float64 takeoff_target_height
 float64 takeoff_velocity
 
+float32 vo_latency
 #0 vo landing
 #1 zero attitude landing
 
