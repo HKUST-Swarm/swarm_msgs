@@ -75,8 +75,7 @@ public:
         ret[0] = T(position.x());
         ret[1] = T(position.y());
         ret[2] = T(position.z());
-
-        ret[3] = T(yaw());
+        ret[3] = T(_yaw);
     }
 
     template <typename T>
@@ -259,8 +258,17 @@ public:
         return p;
     }
 
+    inline double & yaw() {
+        return _yaw;
+    }
+    
     inline double yaw() const {
         return _yaw;
+    }
+    
+    void update_attitude() {
+        _yaw = wrap_angle(_yaw);
+        attitude = attitude_yaw_only = (Eigen::Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
     void print() const {
