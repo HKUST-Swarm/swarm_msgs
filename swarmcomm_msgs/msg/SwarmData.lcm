@@ -30,3 +30,58 @@ struct Bspline_t {
 
     int32_t msg_id;
 }
+
+struct IdxList_t {
+    int32_t id_num;
+    int32_t ids[id_num];
+}
+
+struct ChunkStamps_t {
+    int32_t from_drone_id;
+    double time;
+    int32_t drone_num;
+    IdxList_t idx_lists[drone_num];
+}
+
+struct ChunkData_t {
+    int32_t from_drone_id;
+    int32_t to_drone_id;
+    int32_t chunk_drone_id;
+
+    int32_t voxel_num;
+    int32_t voxel_adrs[voxel_num];
+    int8_t voxel_occ_[voxel_num];
+    int32_t idx;
+}
+
+struct DroneState_t {
+    int32_t drone_id;
+    
+    int32_t id_num;
+    int8_t grid_ids[id_num];
+    double recent_attempt_time;
+    double stamp;
+
+    int32_t len;
+    float pos[len];
+    float vel[len];
+    float yaw;
+}
+
+struct PairOpt_t {
+    int32_t from_drone_id;
+    int32_t to_drone_id;
+
+    double stamp;
+    int32_t ego_num;
+    int8_t ego_ids[ego_num];
+    int32_t other_num;
+    int8_t other_ids[other_num];
+}
+
+struct PairOptResponse_t {
+    int32_t from_drone_id;
+    int32_t to_drone_id;
+    int32_t status; 
+    double stamp;
+}
