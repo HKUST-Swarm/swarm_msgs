@@ -1,11 +1,13 @@
 Header header
 int32 id
+int32 keyframe_id
 
 geometry_msgs/Point position
 geometry_msgs/Point velocity
 float32 yaw
 float32 pitch
 float32 roll
+geometry_msgs/Quaternion quat
 
 bool vo_available
 int32[] dismap_ids
