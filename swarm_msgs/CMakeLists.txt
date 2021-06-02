@@ -15,7 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   swarmtal_msgs
-  plan_env
 )
 
 ## Generate messages in the 'msg' folder
