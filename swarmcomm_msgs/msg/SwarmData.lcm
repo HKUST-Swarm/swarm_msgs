@@ -85,3 +85,26 @@ struct PairOptResponse_t {
     int32_t status; 
     double stamp;
 }
+
+
+
+struct HGrid_t {
+    double stamp;
+    int32_t pt_num;
+    float points1_x[pt_num];
+    float points1_y[pt_num];
+    float points1_z[pt_num];
+    float points2_x[pt_num];
+    float points2_y[pt_num];
+    float points2_z[pt_num];
+}
+
+struct GridTour_t {
+    double stamp;
+    int32_t drone_id;
+
+    int32_t pt_num;
+    float points_x[pt_num];
+    float points_y[pt_num];
+    float points_z[pt_num];
+}
