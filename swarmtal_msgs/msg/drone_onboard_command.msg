@@ -26,6 +26,8 @@ uint32 CTRL_FORMATION_FLY_1=15
 
 uint32 CTRL_SPEC_TRAJS=16
 
+uint32 CTRL_TASK_EXPROLARATION=30
+
 
 uint32 command_type
 #For formation param1 is id
