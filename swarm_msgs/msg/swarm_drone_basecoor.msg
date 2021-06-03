@@ -5,3 +5,4 @@ geometry_msgs/Point[] drone_basecoor
 float64[] drone_baseyaw
 geometry_msgs/Vector3[] position_cov
 float64[] yaw_cov
+uint32 self_id
