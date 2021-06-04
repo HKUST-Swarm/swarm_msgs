@@ -300,11 +300,13 @@ class NodeFrame {
         bool is_static = false;
         Node *node = nullptr;
         int id = -1;
+        int keyframe_id = -1;
 
         DisMap dis_map;
         Pose self_pose;
+        Pose estimated_pose;
+
         Eigen::Vector3d self_vel = Eigen::Vector3d(0, 0, 0);
-        Eigen::Vector3d global_vel = Eigen::Vector3d(0, 0, 0);
         Eigen::Vector3d position_std_to_last;
         double yaw_std_to_last;
         std::map<int, bool> enabled_detection;
