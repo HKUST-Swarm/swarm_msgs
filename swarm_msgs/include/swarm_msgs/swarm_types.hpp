@@ -142,6 +142,8 @@ class GeneralMeasurement2Drones {
 public:
     int64_t ts_a;
     int64_t ts_b;
+    int64_t keyframe_id_a;
+    int64_t keyframe_id_b;
     ros::Time stamp_a;
     ros::Time stamp_b;
     int id_a;
@@ -167,6 +169,9 @@ public:
         id_b = loc.id_b;
         ts_a = loc.ts_a.toNSec();
         ts_b = loc.ts_b.toNSec();
+
+        keyframe_id_a = loc.keyframe_id_a;
+        keyframe_id_b = loc.keyframe_id_b;
 
         stamp_a = loc.ts_a;
         stamp_b = loc.ts_b;
@@ -199,6 +204,26 @@ public:
     LoopConnection() {
         meaturement_type = Loop;
         res_count = 0;
+    }
+
+    LoopConnection invert_loop() const {
+        LoopConnection loop;
+        loop.id_a = id_b;
+        loop.id_b = id_a;
+
+        loop.keyframe_id_a = keyframe_id_b;
+        loop.keyframe_id_b = keyframe_id_a;
+
+        loop.stamp_a = stamp_b;
+        loop.stamp_b = stamp_a;
+        loop.relative_pose = relative_pose.inverse();
+
+
+        loop.self_pose_a = self_pose_b;
+        loop.self_pose_b = self_pose_a;
+        loop.meaturement_type = Loop;
+        loop.res_count = 4;
+        return loop;
     }
 };
 
