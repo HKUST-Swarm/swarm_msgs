@@ -193,6 +193,9 @@ public:
         stamp_a = loc.stamp_a;
         stamp_b = loc.stamp_b;
 
+        keyframe_id_a = loc.keyframe_id_a;
+        keyframe_id_b = loc.keyframe_id_b;
+
         relative_pose = loc.relative_pose;
 
         self_pose_a = loc.self_pose_a;
