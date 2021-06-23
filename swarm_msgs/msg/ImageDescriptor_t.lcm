@@ -37,7 +37,8 @@ struct LandmarkDescriptor_t {
     //MTU is 2304, better make it lower than 2000 byte
     int32_t landmark_id;
     int32_t drone_id;
-    float feature_descriptor[256];
+    int32_t desc_len;
+    float feature_descriptor[desc_len];
     Point2d_t landmark_2d_norm;
     Point2d_t landmark_2d;
     Point3d_t landmark_3d;
