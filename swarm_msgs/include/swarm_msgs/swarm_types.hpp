@@ -164,6 +164,8 @@ class LoopConnection: public GeneralMeasurement2Drones {
 public:
     int avg_count = 1;
     Pose relative_pose;
+    double pos_std = 1.0;
+    double ang_std = 0.1;
     LoopConnection(swarm_msgs::LoopConnection loc) {
         id_a = loc.id_a;
         id_b = loc.id_b;
