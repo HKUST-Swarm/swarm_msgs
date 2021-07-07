@@ -164,9 +164,9 @@ class LoopConnection: public GeneralMeasurement2Drones {
 public:
     int avg_count = 1;
     Pose relative_pose;
-    double pos_std = 1.0;
-    double ang_std = 0.1;
-    LoopConnection(swarm_msgs::LoopConnection loc) {
+    double pos_std = 0.5;
+    double ang_std = 0.05;
+    LoopConnection(swarm_msgs::LoopConnection loc, double pos_std = 0.5, double ang_std = 0.05) {
         id_a = loc.id_a;
         id_b = loc.id_b;
         ts_a = loc.ts_a.toNSec();
@@ -202,6 +202,10 @@ public:
 
         self_pose_a = loc.self_pose_a;
         self_pose_b = loc.self_pose_b;
+
+        pos_std = loc.pos_std;
+        ang_std = loc.ang_std;
+
         meaturement_type = Loop;
         res_count = 4;
     }
@@ -228,6 +232,10 @@ public:
         loop.self_pose_b = self_pose_a;
         loop.meaturement_type = Loop;
         loop.res_count = 4;
+
+        loop.pos_std = pos_std;
+        loop.ang_std = ang_std;
+        
         return loop;
     }
 };
