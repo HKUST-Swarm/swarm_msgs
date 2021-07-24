@@ -48,10 +48,10 @@ public:
     }
 
     void to_vector(double ret[]) const {
-        ret[3] = attitude.w();
-        ret[4] = attitude.x();
-        ret[5] = attitude.y();
-        ret[6] = attitude.z();
+        ret[3] = attitude.x();
+        ret[4] = attitude.y();
+        ret[5] = attitude.z();
+        ret[6] = attitude.w();
 
         ret[0] = position.x();
         ret[1] = position.y();
@@ -60,10 +60,10 @@ public:
 
     template <typename T>
     void to_vector(T ret[]) const {
-        ret[3] = T(attitude.w());
-        ret[4] = T(attitude.x());
-        ret[5] = T(attitude.y());
-        ret[6] = T(attitude.z());
+        ret[3] = T(attitude.x());
+        ret[4] = T(attitude.y());
+        ret[5] = T(attitude.z());
+        ret[6] = T(attitude.w());
 
         ret[0] = T(position.x());
         ret[1] = T(position.y());
@@ -300,6 +300,10 @@ public:
         return attitude;
     }
 
+    inline Eigen::Quaterniond & att() {
+        return attitude;
+    }
+
     inline void set_att(Eigen::Quaterniond att) {
         attitude = att;
         update_yaw();
@@ -316,6 +320,13 @@ public:
 
     Pose() {}
 };
+
+inline std::istream& operator>>(std::istream& input, Pose & pose) {
+  input >> pose.pos().x() >> pose.pos().y() >> pose.pos().z() >> pose.att().x() >> pose.att().y() >>
+        pose.att().z() >> pose.att().w();
+  pose.att().normalize();
+  return input;
+}
 
 typedef std::pair<int64_t, Pose> PoseStamped;
 typedef std::vector<PoseStamped> Path;
