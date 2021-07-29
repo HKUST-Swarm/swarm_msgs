@@ -168,10 +168,10 @@ public:
         if (xyzyaw) {
             this->attitude = AngleAxisd(v[3], Vector3d::UnitZ());
         } else {
-            attitude.w() = v[3];
-            attitude.x() = v[4];
-            attitude.y() = v[5];
-            attitude.z() = v[6];
+            attitude.x() = v[3];
+            attitude.y() = v[4];
+            attitude.z() = v[5];
+            attitude.w() = v[6];
         }
         position.x() = v[0];
         position.y() = v[1];
@@ -275,13 +275,18 @@ public:
         attitude = attitude_yaw_only = (Eigen::Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
-    void print() const {
+    std::string tostr() const {
         auto _rpy = rpy();
-        printf("T [%3.3f,%3.3f,%3.3f] YPR [%3.1f,%3.1f,%3.1f]\n",
+        char _ret[100] = {0};
+        sprintf(_ret, "T [%3.3f,%3.3f,%3.3f] YPR [%3.1f,%3.1f,%3.1f]\n",
                position.x(), position.y(), position.z(),
                _rpy.z() * 57.3,
                _rpy.y() * 57.3,
                _rpy.x() * 57.3);
+        return std::string(_ret);
+    }
+    void print() const {
+        std::cout << tostr();
     }
 
     inline Eigen::Vector3d pos() const {
@@ -328,6 +333,11 @@ inline std::istream& operator>>(std::istream& input, Pose & pose) {
   return input;
 }
 
+
+inline std::ostream& operator<<(std::ostream& output, Pose & pose) {
+    output << pose.tostr();
+    return output;
+}
 typedef std::pair<int64_t, Pose> PoseStamped;
 typedef std::vector<PoseStamped> Path;
 
