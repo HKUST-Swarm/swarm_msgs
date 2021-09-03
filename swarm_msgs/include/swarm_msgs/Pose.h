@@ -120,6 +120,23 @@ public:
     }
 
 
+
+    Pose(geometry_msgs::Point pos, geometry_msgs::Quaternion orientation) {
+        position.x() = pos.x;
+        position.y() = pos.y;
+        position.z() = pos.z;
+
+        attitude.w() = orientation.w;
+        attitude.x() = orientation.x;
+        attitude.y() = orientation.y;
+        attitude.z() = orientation.z;
+        attitude.normalize();
+
+        update_yaw();
+    }
+
+
+
     Pose(Eigen::Vector3d pos, double yaw) {
         this->attitude = AngleAxisd(yaw, Vector3d::UnitZ());
         position = pos;

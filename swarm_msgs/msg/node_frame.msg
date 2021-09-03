@@ -1,5 +1,5 @@
 Header header
-int32 id
+int32 id #This is drone ID!!!
 int32 keyframe_id
 
 geometry_msgs/Point position

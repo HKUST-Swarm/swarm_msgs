@@ -91,8 +91,8 @@ class Node {
             return _coeffs[0] + _coeffs[1] * mea;
         }
 
-        Node(int _id) :
-                id(_id) {
+        Node(int _id, bool has_vo=true) :
+                id(_id), _has_vo(has_vo) {
 
         }
 
@@ -140,10 +140,10 @@ typedef std::tuple<int64_t, int64_t, int, int> GeneralMeasurement2DronesKey;
 
 class GeneralMeasurement2Drones {
 public:
-    int64_t ts_a;
-    int64_t ts_b;
-    int64_t keyframe_id_a;
-    int64_t keyframe_id_b;
+    uint64_t ts_a;
+    uint64_t ts_b;
+    uint64_t keyframe_id_a;
+    uint64_t keyframe_id_b;
     ros::Time stamp_a;
     ros::Time stamp_b;
     int id_a;
@@ -237,6 +237,14 @@ public:
         loop.ang_std = ang_std;
         
         return loop;
+    }
+
+    Eigen::Matrix<double, 6, 6> information_matrix() const {
+        Eigen::Matrix<double, 6, 6> inf_mat;
+        inf_mat.setIdentity();
+        inf_mat.block<3, 3>(0, 0) = inf_mat.block<3, 3>(0, 0) * pos_std;
+        inf_mat.block<3, 3>(3, 3) = inf_mat.block<3, 3>(0, 0) * ang_std;
+        return inf_mat;
     }
 };
 
@@ -338,7 +346,7 @@ class NodeFrame {
         bool is_static = false;
         Node *node = nullptr;
         int id = -1;
-        int keyframe_id = -1;
+        uint64_t keyframe_id = -1;
 
         DisMap dis_map;
         Pose self_pose;
