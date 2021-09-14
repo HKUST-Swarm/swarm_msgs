@@ -166,6 +166,8 @@ public:
     Pose relative_pose;
     double pos_std = 0.5;
     double ang_std = 0.05;
+    bool has_information_matrix = false;
+    Eigen::Matrix<double, 6, 6> inf_mat;
     LoopConnection(swarm_msgs::LoopConnection loc, double pos_std = 0.5, double ang_std = 0.05) {
         id_a = loc.id_a;
         id_b = loc.id_b;
@@ -184,6 +186,29 @@ public:
         self_pose_b = Pose(loc.self_pose_b);
         meaturement_type = Loop;
         res_count = 4;
+    }
+
+    LoopConnection(swarm_msgs::LoopConnection loc, Eigen::Matrix<double, 6, 6> _inf_mat):
+        inf_mat(_inf_mat)
+    {
+        id_a = loc.id_a;
+        id_b = loc.id_b;
+        ts_a = loc.ts_a.toNSec();
+        ts_b = loc.ts_b.toNSec();
+
+        keyframe_id_a = loc.keyframe_id_a;
+        keyframe_id_b = loc.keyframe_id_b;
+
+        stamp_a = loc.ts_a;
+        stamp_b = loc.ts_b;
+
+        relative_pose = Pose(loc.dpos, loc.dyaw);
+
+        self_pose_a = Pose(loc.self_pose_a);
+        self_pose_b = Pose(loc.self_pose_b);
+        meaturement_type = Loop;
+        res_count = 6;
+        has_information_matrix = true;
     }
 
     LoopConnection(const LoopConnection &loc) {
@@ -240,11 +265,15 @@ public:
     }
 
     Eigen::Matrix<double, 6, 6> information_matrix() const {
-        Eigen::Matrix<double, 6, 6> inf_mat;
-        inf_mat.setIdentity();
-        inf_mat.block<3, 3>(0, 0) = inf_mat.block<3, 3>(0, 0) * pos_std;
-        inf_mat.block<3, 3>(3, 3) = inf_mat.block<3, 3>(0, 0) * ang_std;
-        return inf_mat;
+        if (has_information_matrix) {
+            return inf_mat;
+        } else {
+            Eigen::Matrix<double, 6, 6> inf_mat;
+            inf_mat.setIdentity();
+            inf_mat.block<3, 3>(0, 0) = inf_mat.block<3, 3>(0, 0) * pos_std;
+            inf_mat.block<3, 3>(3, 3) = inf_mat.block<3, 3>(0, 0) * ang_std;
+            return inf_mat;
+        }
     }
 };
 
