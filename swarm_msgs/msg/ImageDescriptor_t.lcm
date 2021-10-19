@@ -102,9 +102,7 @@ struct LoopConnection_t {
     Time_t ts_b;
     int32_t id_a;
     int32_t id_b;
-    Point3d_t dpos;
-    double dyaw;
-    
+    Pose_t relative_pose;
     Pose_t self_pose_a;
     Pose_t self_pose_b;
     int64_t msg_id;

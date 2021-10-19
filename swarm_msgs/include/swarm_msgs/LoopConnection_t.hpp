@@ -11,7 +11,7 @@
 
 #include "Time_t.hpp"
 #include "Time_t.hpp"
-#include "Point3d_t.hpp"
+#include "Pose_t.hpp"
 #include "Pose_t.hpp"
 #include "Pose_t.hpp"
 
@@ -27,9 +27,7 @@ class LoopConnection_t
 
         int32_t    id_b;
 
-        Point3d_t  dpos;
-
-        double     dyaw;
+        Pose_t     relative_pose;
 
         Pose_t     self_pose_a;
 
@@ -147,10 +145,7 @@ int LoopConnection_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->id_b, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->dpos._encodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->dyaw, 1);
+    tlen = this->relative_pose._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->self_pose_a._encodeNoHash(buf, offset + pos, maxlen - pos);
@@ -184,10 +179,7 @@ int LoopConnection_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->id_b, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->dpos._decodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->dyaw, 1);
+    tlen = this->relative_pose._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->self_pose_a._decodeNoHash(buf, offset + pos, maxlen - pos);
@@ -212,8 +204,7 @@ int LoopConnection_t::_getEncodedSizeNoHash() const
     enc_size += this->ts_b._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += this->dpos._getEncodedSizeNoHash();
-    enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += this->relative_pose._getEncodedSizeNoHash();
     enc_size += this->self_pose_a._getEncodedSizeNoHash();
     enc_size += this->self_pose_b._getEncodedSizeNoHash();
     enc_size += __int64_t_encoded_array_size(NULL, 1);
@@ -229,10 +220,10 @@ uint64_t LoopConnection_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, LoopConnection_t::getHash };
 
-    uint64_t hash = 0x7b1388dd9d1aeac1LL +
+    uint64_t hash = 0xab3884dbc516f954LL +
          Time_t::_computeHash(&cp) +
          Time_t::_computeHash(&cp) +
-         Point3d_t::_computeHash(&cp) +
+         Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp);
 

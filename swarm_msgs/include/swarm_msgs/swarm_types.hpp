@@ -167,11 +167,12 @@ class LoopConnection: public GeneralMeasurement2Drones {
 public:
     int avg_count = 1;
     Pose relative_pose;
-    double pos_std = 0.5;
-    double ang_std = 0.05;
+    Eigen::Vector3d pos_std;
+    Eigen::Vector3d ang_std;
     bool has_information_matrix = false;
     Eigen::Matrix<double, 6, 6> inf_mat;
-    LoopConnection(swarm_msgs::LoopConnection loc, double pos_std = 0.5, double ang_std = 0.05) {
+    Eigen::Matrix<double, 6, 6> sqrt_inf_mat;
+    LoopConnection(swarm_msgs::LoopConnection loc, bool yaw_only = false) {
         id_a = loc.id_a;
         id_b = loc.id_b;
         ts_a = loc.ts_a.toNSec();
@@ -183,12 +184,23 @@ public:
         stamp_a = loc.ts_a;
         stamp_b = loc.ts_b;
 
-        relative_pose = Pose(loc.dpos, loc.dyaw);
+        relative_pose = Pose(loc.relative_pose);
 
         self_pose_a = Pose(loc.self_pose_a);
         self_pose_b = Pose(loc.self_pose_b);
+
+        if (yaw_only) {
+            relative_pose.set_yaw_only();
+            self_pose_a.set_yaw_only();
+            self_pose_b.set_yaw_only();
+            res_count = 4;
+        } else {
+            res_count = 6;
+        }
         meaturement_type = Loop;
-        res_count = 4;
+
+        pos_std = Eigen::Vector3d(loc.pos_std.x, loc.pos_std.y, loc.pos_std.z);
+        ang_std = Eigen::Vector3d(loc.ang_std.x, loc.ang_std.y, loc.ang_std.z);
     }
 
     LoopConnection(swarm_msgs::LoopConnection loc, Eigen::Matrix<double, 6, 6> _inf_mat):
@@ -205,13 +217,15 @@ public:
         stamp_a = loc.ts_a;
         stamp_b = loc.ts_b;
 
-        relative_pose = Pose(loc.dpos, loc.dyaw);
-
+        relative_pose = loc.relative_pose;
         self_pose_a = Pose(loc.self_pose_a);
         self_pose_b = Pose(loc.self_pose_b);
         meaturement_type = Loop;
         res_count = 6;
         has_information_matrix = true;
+
+        //Not accurate
+        sqrt_inf_mat = _inf_mat.cwiseSqrt();
     }
 
     LoopConnection(const LoopConnection &loc) {
@@ -271,11 +285,33 @@ public:
         if (has_information_matrix) {
             return inf_mat;
         } else {
-            Eigen::Matrix<double, 6, 6> inf_mat;
-            inf_mat.setIdentity();
-            inf_mat.block<3, 3>(0, 0) = inf_mat.block<3, 3>(0, 0) * pos_std;
-            inf_mat.block<3, 3>(3, 3) = inf_mat.block<3, 3>(0, 0) * ang_std;
-            return inf_mat;
+            Eigen::Matrix<double, 6, 6> _inf_mat;
+            Eigen::Vector3d pos_sqrt_inv(1/pos_std.x(), 1/pos_std.y(), 1/pos_std.z());
+            Eigen::Matrix<double, 3, 3> pos_sqrt_inf_mat = pos_sqrt_inv.asDiagonal();
+            
+            Eigen::Vector3d ang_sqrt_inv(1/ang_std.x(), 1/ang_std.y(), 1/ang_std.z());
+            Eigen::Matrix<double, 3, 3> ang_sqrt_inf_mat = ang_sqrt_inv.asDiagonal();
+            
+            _inf_mat.block<3, 3>(0, 0) = pos_sqrt_inf_mat*pos_sqrt_inf_mat;
+            _inf_mat.block<3, 3>(3, 3) = ang_sqrt_inf_mat*ang_sqrt_inf_mat;
+            return _inf_mat;
+        }
+    }
+
+    Eigen::Matrix<double, 6, 6> sqrt_information_matrix() const {
+        if (has_information_matrix) {
+            return sqrt_inf_mat;
+        } else {
+            Eigen::Matrix<double, 6, 6> _sqrt_inf_mat;
+            Eigen::Vector3d pos_sqrt_inv(1/pos_std.x(), 1/pos_std.y(), 1/pos_std.z());
+            Eigen::Matrix<double, 3, 3> pos_sqrt_inf_mat = pos_sqrt_inv.asDiagonal();
+            
+            Eigen::Vector3d ang_sqrt_inv(1/ang_std.x(), 1/ang_std.y(), 1/ang_std.z());
+            Eigen::Matrix<double, 3, 3> ang_sqrt_inf_mat = ang_sqrt_inv.asDiagonal();
+            
+            _sqrt_inf_mat.block<3, 3>(0, 0) = pos_sqrt_inf_mat;
+            _sqrt_inf_mat.block<3, 3>(3, 3) = ang_sqrt_inf_mat;
+            return _sqrt_inf_mat;
         }
     }
 };
