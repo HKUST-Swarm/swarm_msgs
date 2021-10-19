@@ -5,12 +5,15 @@
 #include <map>
 #include <vector>
 #include <swarm_msgs/Pose.h>
-#include <ros/ros.h>
 #include "yaml-cpp/yaml.h"
 #include <exception>
 #include <set>
 #include <swarm_msgs/LoopConnection.h>
 #include <swarm_msgs/node_detected_xyzyaw.h>
+
+#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 
 // #define ERROR_NORMLIZED 0.01
 #define ERROR_NORMLIZED 1.0
@@ -367,159 +370,282 @@ public:
 typedef std::vector<std::pair<int64_t, Pose>> DroneTraj;
 
 class NodeFrame {
-    public:
-        bool frame_available = false;
-        bool vo_available = false;
-        bool dists_available = false;
-        bool has_detect_relpose = false;
-        bool is_static = false;
-        Node *node = nullptr;
-        int id = -1;
-        uint64_t keyframe_id = -1;
+public:
+    bool frame_available = false;
+    bool vo_available = false;
+    bool dists_available = false;
+    bool has_detect_relpose = false;
+    bool is_static = false;
+    Node *node = nullptr;
+    int id = -1;
+    uint64_t keyframe_id = -1;
 
-        DisMap dis_map;
-        Pose self_pose;
-        Pose estimated_pose;
+    DisMap dis_map;
+    Pose self_pose;
+    Pose estimated_pose;
 
-        Eigen::Vector3d self_vel = Eigen::Vector3d(0, 0, 0);
-        Eigen::Vector3d position_std_to_last;
-        double yaw_std_to_last;
-        std::map<int, bool> enabled_detection;
-        std::map<int, bool> enabled_distance;
-        std::map<int, bool> outlier_distance;
-        std::vector<DroneDetection> detected_nodes;
-        std::map<int, Eigen::Matrix<double, 2, 3>> detect_tan_base;
+    Eigen::Vector3d self_vel = Eigen::Vector3d(0, 0, 0);
+    Eigen::Vector3d position_std_to_last;
+    double yaw_std_to_last;
+    std::map<int, bool> enabled_detection;
+    std::map<int, bool> enabled_distance;
+    std::map<int, bool> outlier_distance;
+    std::vector<DroneDetection> detected_nodes;
+    std::map<int, Eigen::Matrix<double, 2, 3>> detect_tan_base;
 
-        std::map<int, Eigen::Vector3d> detected_nodes_posvar;
-        std::map<int, Eigen::Vector3d> detected_nodes_angvar;
+    std::map<int, Eigen::Vector3d> detected_nodes_posvar;
+    std::map<int, Eigen::Vector3d> detected_nodes_angvar;
 
-        ros::Time stamp;
-        int64_t ts;
-        bool is_valid = false;
+    ros::Time stamp;
+    int64_t ts;
+    bool is_valid = false;
 
-        NodeFrame(Node *_node, Eigen::Vector3d pos_std, double yaw_std) :
-                node(_node), position_std_to_last(pos_std), yaw_std_to_last(yaw_std) {
-            is_static = _node->is_static_node();
+    NodeFrame(Node *_node) :
+            node(_node), position_std_to_last(0.01, 0.01, 0.01), yaw_std_to_last(0.01) {
+        is_static = _node->is_static_node();
+    }
+
+    double to_real_distance(const double & measure, int _id) const {
+        return node->to_real_distance(measure, _id);
+    }
+
+    NodeFrame() {
+
+    }
+
+    bool has_odometry() const {
+        return vo_available;
+    }
+
+    bool has_detection() const {
+        return detected_nodes.size() > 0;
+    }
+
+    int detections() const {
+        return detected_nodes.size();
+    }
+
+    bool distance_is_outlier(int idj) const {
+        //If distance not exist or is outlier, return true
+        if (outlier_distance.find(idj) != outlier_distance.end() && outlier_distance.at(idj)) {
+            // ROS_INFO("%d<->%d distance_i?s_outlier! %d");
+            return true;
         }
 
-        double to_real_distance(const double & measure, int _id) const {
-            return node->to_real_distance(measure, _id);
+        if (dis_map.find(idj) == dis_map.end()) {
+            return true;
         }
+        
+        return false;
+    }
 
-        NodeFrame() {
-
+    bool has_distance_to(int idj) const {
+        if (dis_map.find(idj) != dis_map.end()) {
+            return true;
         }
+        return false;
+    }
 
-        bool has_odometry() const {
-            return vo_available;
-        }
-
-        bool has_detection() const {
-            return detected_nodes.size() > 0;
-        }
-
-        int detections() const {
-            return detected_nodes.size();
-        }
-
-        bool distance_is_outlier(int idj) const {
-            //If distance not exist or is outlier, return true
-            if (outlier_distance.find(idj) != outlier_distance.end() && outlier_distance.at(idj)) {
-                // ROS_INFO("%d<->%d distance_i?s_outlier! %d");
-                return true;
-            }
-
-            if (dis_map.find(idj) == dis_map.end()) {
-                return true;
-            }
-            
+    bool distance_available(int _idj) const {
+        if (_idj == id) {
             return false;
         }
+        // bool enab_distance = false;
+        // if (enabled_distance.find(_idj) != enabled_distance.end()) {
+        //     enab_distance = enabled_distance.at(_idj);
+        // }
+        // ROS_INFO("%d<->%d@%d has_distance_to %d enabled_distance.find() %d enabled_distance %d !distance_is_outlier %d",
+        //     id, _idj,
+        //     TSShort(ts),
+        //     has_distance_to(_idj),
+        //     enabled_distance.find(_idj) != enabled_distance.end(),
+        //     enab_distance, !distance_is_outlier(_idj)
+        // );
+        return has_distance_to(_idj) && 
+            enabled_distance.find(_idj) != enabled_distance.end() 
+            && enabled_distance.at(_idj) && !distance_is_outlier(_idj);
+    }
 
-        bool has_distance_to(int idj) const {
-            if (dis_map.find(idj) != dis_map.end()) {
-                return true;
-            }
-            return false;
+    Pose pose() const {
+        //If has vo, return vo position
+        if (!is_static) {
+            assert((node->has_odometry() && vo_available) && "Try get position non non-static via VO failed node");
         }
+        
 
-        bool distance_available(int _idj) const {
-            if (_idj == id) {
-                return false;
-            }
-            // bool enab_distance = false;
-            // if (enabled_distance.find(_idj) != enabled_distance.end()) {
-            //     enab_distance = enabled_distance.at(_idj);
-            // }
-            // ROS_INFO("%d<->%d@%d has_distance_to %d enabled_distance.find() %d enabled_distance %d !distance_is_outlier %d",
-            //     id, _idj,
-            //     TSShort(ts),
-            //     has_distance_to(_idj),
-            //     enabled_distance.find(_idj) != enabled_distance.end(),
-            //     enab_distance, !distance_is_outlier(_idj)
-            // );
-            return has_distance_to(_idj) && 
-                enabled_distance.find(_idj) != enabled_distance.end() 
-                && enabled_distance.at(_idj) && !distance_is_outlier(_idj);
-        }
-
-        Pose pose() const {
-            //If has vo, return vo position
-            if (!is_static) {
-                assert((node->has_odometry() && vo_available) && "Try get position non non-static via VO failed node");
-            }
-            
-
-            if (vo_available) {
-                return self_pose;
-            } else if(is_static){
-                if (node->has_global_pose()) {
-                    return node->get_global_pose();
-                } else {
-                    //Is unknown static node, using 0, 0, 0 position
-                    return Pose::Identity();
-                }
-            }
-            assert(false && "MUST STH wrong on get pose()");
-            return Pose();
-        }
-
-        Eigen::Vector3d position() const {
-            return pose().pos();
-        }
-
-        double yaw() const {
-            return pose().yaw();
-        }
-
-        Eigen::Quaterniond attitude(bool yaw_only = false) const {
-            if (yaw_only) {
-                return pose().att_yaw_only();
+        if (vo_available) {
+            return self_pose;
+        } else if(is_static){
+            if (node->has_global_pose()) {
+                return node->get_global_pose();
             } else {
-                return pose().att();
+                //Is unknown static node, using 0, 0, 0 position
+                return Pose::Identity();
             }
+        }
+        assert(false && "MUST STH wrong on get pose()");
+        return Pose();
+    }
 
+    Eigen::Vector3d position() const {
+        return pose().pos();
+    }
+
+    double yaw() const {
+        return pose().yaw();
+    }
+
+    Eigen::Quaterniond attitude(bool yaw_only = false) const {
+        if (yaw_only) {
+            return pose().att_yaw_only();
+        } else {
+            return pose().att();
         }
 
-        Eigen::Vector3d get_anntena_pos() const {
-            return node->get_anntena_pos();
-        }
+    }
 
-        Eigen::Vector3d velocity() const {
-            assert(!(node->has_odometry() && !vo_available) && "Try get velocity on VO failed node");
-            if (vo_available) {
-                return self_vel;
+    Eigen::Vector3d get_anntena_pos() const {
+        return node->get_anntena_pos();
+    }
+
+    Eigen::Vector3d velocity() const {
+        assert(!(node->has_odometry() && !vo_available) && "Try get velocity on VO failed node");
+        if (vo_available) {
+            return self_vel;
+        } else {
+            if (node->has_global_pose()) {
+                return node->get_global_velocity();
             } else {
-                if (node->has_global_pose()) {
-                    return node->get_global_velocity();
-                } else {
-                    //Is unknown static node, using 0, 0, 0 position
+                //Is unknown static node, using 0, 0, 0 position
 
-                    return Vector3d(0, 0, 0);
-                }
+                return Vector3d(0, 0, 0);
             }
         }
-    };
+    }
+};
+
+class DroneTrajectory {
+
+    std::vector<Swarm::NodeFrame> trajectory_frames;
+    std::vector<Swarm::Pose> trajectory;
+    std::vector<int64_t> id_trajectory;
+    std::vector<double> cul_length;
+    std::vector<int64_t> ts_trajectory;
+    std::vector<ros::Time> stamp_trajectory;
+    std::map<int64_t, int> ts2index;
+    std::map<int64_t, int> id2index;
+    bool is_traj_ego_motion = true; //If false, the is PGO traj.
+    int drone_id = -1;
+    int traj_points = 0;
+    nav_msgs::Path ros_path;
+    std::string frame_id = "world";
+public:
+    DroneTrajectory(int _drone_id, bool is_ego_motion, std::string _frame_id="world"):
+        drone_id(_drone_id), is_traj_ego_motion(is_ego_motion), frame_id(_frame_id)
+    {
+        ros_path.header.frame_id = frame_id;
+    }
+
+    DroneTrajectory() {
+        ros_path.header.frame_id = frame_id;
+    }
+
+    void push(const Swarm::NodeFrame & nf) {
+        if (nf.has_odometry()) {
+            if (is_traj_ego_motion) {
+                push(nf, nf.self_pose);
+            } else {
+                push(nf, nf.estimated_pose);
+            }
+        }
+    }
+
+    int64_t get_ts(int index) const {
+        return ts_trajectory.at(index);
+    }
+
+    Swarm::Pose get_pose(int index) const {
+        return trajectory.at(index);
+    }
+
+    Swarm::NodeFrame get_node_frame(int index) const {
+        return trajectory_frames.at(index);
+    }
+
+    void push(const Swarm::NodeFrame & nf, const Swarm::Pose & pose) {
+        if (cul_length.size() == 0) {
+            cul_length.push_back(0);
+        } else {
+            Swarm::Pose last = trajectory.back();
+            auto dpose = Swarm::Pose::DeltaPose(last, pose);
+            cul_length.push_back(dpose.pos().norm()+cul_length.back());
+        }
+
+        trajectory_frames.push_back(nf);
+        trajectory.push_back(pose);
+        id_trajectory.push_back(nf.id);
+        ts_trajectory.push_back(nf.ts);
+        stamp_trajectory.push_back(nf.stamp);
+        ts2index[nf.ts] = trajectory_frames.size() - 1;
+        id2index[nf.id] = trajectory_frames.size() - 1;
+
+
+        geometry_msgs::PoseStamped _pose_stamped;
+        _pose_stamped.header.stamp = nf.stamp;
+        _pose_stamped.header.frame_id = frame_id;
+        ros_path.header.stamp = _pose_stamped.header.stamp;
+        _pose_stamped.pose = pose.to_ros_pose();
+        ros_path.poses.push_back(_pose_stamped);
+
+        traj_points++;
+    }
+
+    int trajectory_size() const {
+        return ts_trajectory.size();
+    }
+
+    double trajectory_length() const {
+        return cul_length.back();
+    }
+
+    double trajectory_length_by_ts(int64_t tsa, int64_t tsb) const {
+        if (ts2index.find(tsa) == ts2index.end()) {
+            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsa not found");
+            return -1;
+        }
+
+        if (ts2index.find(tsb) == ts2index.end()) {
+            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsb not found");
+            return -1;
+        }
+
+        auto indexa = ts2index.at(tsa);
+        auto indexb = ts2index.at(tsb);
+
+        return fabs(cul_length[indexb] - cul_length[indexa]);
+    }
+
+    double trajectory_length_by_id(int64_t ida, int64_t idb) const {
+        if (id2index.find(ida) == id2index.end()) {
+            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsa not found");
+            return -1;
+        }
+
+        if (id2index.find(idb) == id2index.end()) {
+            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsb not found");
+            return -1;
+        }
+
+        auto indexa = id2index.at(ida);
+        auto indexb = id2index.at(idb);
+
+        return fabs(cul_length[indexb] - cul_length[indexa]);
+    }
+
+    const nav_msgs::Path & get_ros_path() const {
+        return ros_path;
+    }
+};
 
 struct SwarmFrameState {
     std::map<int, Pose> node_poses;
