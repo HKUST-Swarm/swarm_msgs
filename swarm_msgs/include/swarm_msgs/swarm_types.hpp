@@ -175,6 +175,7 @@ public:
     Eigen::Matrix<double, 6, 6> inf_mat;
     Eigen::Matrix<double, 6, 6> sqrt_inf_mat;
     LoopEdge(swarm_msgs::LoopEdge loc, bool yaw_only = false) {
+        id = loc.id;
         id_a = loc.id_a;
         id_b = loc.id_b;
         ts_a = loc.ts_a.toNSec();
@@ -205,9 +206,26 @@ public:
         ang_std = Eigen::Vector3d(loc.ang_std.x, loc.ang_std.y, loc.ang_std.z);
     }
 
+    Eigen::Vector3d get_pos_cov() const {
+        return pos_std.array()*pos_std.array();
+    }
+
+    Eigen::Vector3d get_ang_cov() const{
+        return ang_std.array()*ang_std.array();
+    }
+
+    Eigen::Matrix<double, 6, 1> get_cov_vec() const {
+        Eigen::Matrix<double, 6, 1> cov_vec;
+        cov_vec.setIdentity();
+        cov_vec.block<3, 1>(0, 0) = get_ang_cov();
+        cov_vec.block<3, 1>(3, 0) = get_pos_cov();
+        return cov_vec;
+    }
+
     LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix<double, 6, 6> _inf_mat):
         inf_mat(_inf_mat)
     {
+        id = loc.id;
         id_a = loc.id_a;
         id_b = loc.id_b;
         ts_a = loc.ts_a.toNSec();
@@ -231,6 +249,7 @@ public:
     }
 
     LoopEdge(const LoopEdge &loc) {
+        id = loc.id;
         id_a = loc.id_a;
         id_b = loc.id_b;
         ts_a = loc.ts_a;
@@ -261,6 +280,8 @@ public:
 
     LoopEdge invert_loop() const {
         LoopEdge loop;
+        //Invert loop is still treat as same id for debugging.
+        loop.id = id;
         loop.id_a = id_b;
         loop.id_b = id_a;
 
@@ -315,6 +336,24 @@ public:
             _sqrt_inf_mat.block<3, 3>(3, 3) = ang_sqrt_inf_mat;
             return _sqrt_inf_mat;
         }
+    }
+
+    bool is_inter_loop() const { 
+        return id_a != id_b;
+    }
+
+    //Same direction, return 1 else 2
+    int same_robot_pair(LoopEdge edge2) const {
+        if (is_inter_loop()) {
+            if (id_a == edge2.id_a && id_b == edge2.id_b) {
+                return 1;
+            }
+
+            if (id_a == edge2.id_b && id_b == edge2.id_a) {
+                return 2;
+            }
+        }
+        return 0;
     }
 };
 
@@ -644,14 +683,35 @@ public:
         return cul_length.back();
     }
 
-    double trajectory_length_by_ts(int64_t tsa, int64_t tsb) const {
+    Swarm::Pose get_relative_pose_by_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) == ts2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
+            ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
+            exit(-1);
+            return Swarm::Pose();
+        }
+
+        if (ts2index.find(tsb) == ts2index.end()) {
+            ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
+            exit(-1);
+            return Swarm::Pose();
+        }
+
+        auto indexa = ts2index.at(tsa);
+        auto indexb = ts2index.at(tsb);
+
+        return Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb));
+    }
+
+    double trajectory_length_by_ts(TsType tsa, TsType tsb) const {
+        if (ts2index.find(tsa) == ts2index.end()) {
+            ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
+            exit(-1);
             return -1;
         }
 
         if (ts2index.find(tsb) == ts2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
+            ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
+            exit(-1);
             return -1;
         }
 
@@ -661,7 +721,7 @@ public:
         return fabs(cul_length[indexb] - cul_length[indexa]);
     }
 
-    double trajectory_length_by_id(int64_t ida, int64_t idb) const {
+    double trajectory_length_by_id(FrameIdType ida, FrameIdType idb) const {
         if (id2index.find(ida) == id2index.end()) {
             ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsa not found", ida, idb);
             return -1;
@@ -676,6 +736,16 @@ public:
         auto indexb = id2index.at(idb);
 
         return fabs(cul_length[indexb] - cul_length[indexa]);
+    }
+
+    //Ang Pos
+    Eigen::Matrix<double, 6, 1> covariance_between_ts(TsType tsa, TsType tsb, double cov_ang_pre_meter, double cov_pos_pre_meter) {
+        double len = trajectory_length_by_ts(tsa, tsb);
+        Eigen::Matrix<double, 6, 1> cov_vec;
+        cov_vec.setIdentity();
+        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*cov_ang_pre_meter;
+        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*cov_pos_pre_meter;
+        return cov_vec;
     }
 
     const nav_msgs::Path & get_ros_path() const {
