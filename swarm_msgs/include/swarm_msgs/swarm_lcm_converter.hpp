@@ -1,13 +1,16 @@
+#pragma once
+
 #include "ImageDescriptor_t.hpp"
 #include <swarm_msgs/ImageDescriptor.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point32.h>
 #include <opencv2/opencv.hpp>
-#include <swarm_msgs/LoopConnection.h>
-#include "LoopConnection_t.hpp"
+#include <swarm_msgs/LoopEdge.h>
+#include "LoopEdge_t.hpp"
 #include <swarm_msgs/Pose.h>
 #include <swarm_msgs/FisheyeFrameDescriptor.h>
 #include <swarm_msgs/FisheyeFrameDescriptor_t.hpp>
+#include <swarm_msgs/swarm_types.hpp>
 
 inline Pose_t fromROSPose(const geometry_msgs::Pose & pose) {
     Pose_t t;
@@ -169,8 +172,8 @@ inline std::vector<cv::KeyPoint> to_keypoints(const std::vector<cv::Point2f> & p
 }
 
 
-inline swarm_msgs::LoopConnection toROSLoopConnection(const LoopConnection_t & loop_con) {
-    swarm_msgs::LoopConnection loop_conn;
+inline swarm_msgs::LoopEdge toROSLoopEdge(const LoopEdge_t & loop_con) {
+    swarm_msgs::LoopEdge loop_conn;
     loop_conn.ts_a =  toROSTime(loop_con.ts_a);
     loop_conn.ts_b =  toROSTime(loop_con.ts_b);
 
@@ -184,11 +187,20 @@ inline swarm_msgs::LoopConnection toROSLoopConnection(const LoopConnection_t & l
     
     loop_conn.pnp_inlier_num = loop_con.pnp_inlier_num;
 
+    loop_conn.pos_std.x = loop_con.pos_std.x;
+    loop_conn.pos_std.y = loop_con.pos_std.y;
+    loop_conn.pos_std.z = loop_con.pos_std.z;
+
+    loop_conn.ang_std.x = loop_con.ang_std.x;
+    loop_conn.ang_std.y = loop_con.ang_std.y;
+    loop_conn.ang_std.z = loop_con.ang_std.z;
+    loop_conn.id = loop_con.id;
+
     return loop_conn;
 }
 
-inline LoopConnection_t toLCMLoopConnection(const swarm_msgs::LoopConnection & loop_con) {
-    LoopConnection_t loop_conn;
+inline LoopEdge_t toLCMLoopEdge(const swarm_msgs::LoopEdge & loop_con) {
+    LoopEdge_t loop_conn;
     loop_conn.ts_a =  toLCMTime(loop_con.ts_a);
     loop_conn.ts_b =  toLCMTime(loop_con.ts_b);
 
@@ -200,6 +212,15 @@ inline LoopConnection_t toLCMLoopConnection(const swarm_msgs::LoopConnection & l
     loop_conn.relative_pose = fromROSPose(loop_con.relative_pose);
     loop_conn.self_pose_a = fromROSPose(loop_con.self_pose_a);
     loop_conn.self_pose_b = fromROSPose(loop_con.self_pose_b);
+
+    loop_conn.pos_std.x = loop_con.pos_std.x;
+    loop_conn.pos_std.y = loop_con.pos_std.y;
+    loop_conn.pos_std.z = loop_con.pos_std.z;
+
+    loop_conn.ang_std.x = loop_con.ang_std.x;
+    loop_conn.ang_std.y = loop_con.ang_std.y;
+    loop_conn.ang_std.z = loop_con.ang_std.z;
+    loop_conn.id = loop_con.id;
 
     return loop_conn;
 }
@@ -294,11 +315,11 @@ inline swarm_msgs::FisheyeFrameDescriptor toROSFisheyeDescriptor(const FisheyeFr
     return fisheye_frame;
 }
 
-inline int64_t to_nsec(Time_t stamp) {
+inline TsType to_nsec(Time_t stamp) {
     return stamp.sec * 1e9 + stamp.nsec;
 }
 
-inline int64_t hash_stamp_drone_id(Time_t stamp, int drone_id) {
+inline TsType hash_stamp_drone_id(Time_t stamp, int drone_id) {
     return to_nsec(stamp)*100 + drone_id;
 }
 

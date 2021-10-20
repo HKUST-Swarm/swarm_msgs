@@ -355,7 +355,7 @@ inline std::ostream& operator<<(std::ostream& output, Pose & pose) {
     output << pose.tostr();
     return output;
 }
-typedef std::pair<int64_t, Pose> PoseStamped;
-typedef std::vector<PoseStamped> Path;
+// typedef std::pair<TsType, Pose> PoseStamped;
+// typedef std::vector<PoseStamped> Path;
 
 } // namespace Swarm

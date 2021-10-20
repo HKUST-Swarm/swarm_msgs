@@ -97,7 +97,7 @@ struct FisheyeFrameDescriptor_t {
     ImageDescriptor_t images[image_num];
 }
 
-struct LoopConnection_t {
+struct LoopEdge_t {
     Time_t ts_a;
     Time_t ts_b;
     int32_t id_a;
@@ -105,6 +105,8 @@ struct LoopConnection_t {
     Pose_t relative_pose;
     Pose_t self_pose_a;
     Pose_t self_pose_b;
-    int64_t msg_id;
+    int64_t id;
     int32_t pnp_inlier_num;
+    Point3d_t pos_std;
+    Point3d_t ang_std;
 }

@@ -8,7 +8,7 @@
 #include "yaml-cpp/yaml.h"
 #include <exception>
 #include <set>
-#include <swarm_msgs/LoopConnection.h>
+#include <swarm_msgs/LoopEdge.h>
 #include <swarm_msgs/node_detected_xyzyaw.h>
 
 #include <ros/ros.h>
@@ -23,17 +23,17 @@
 #define ENABLE_LOOP
 // pixel error/focal length
 
-using namespace Swarm;
-
 typedef std::vector<Vector3d> vec_array;
 typedef std::vector<Quaterniond> quat_array;
 typedef std::map<int, double> DisMap;
+typedef uint64_t TsType;
+typedef uint64_t FrameIdType;
 
-inline int TSShort(int64_t ts) {
+inline int TSShort(TsType ts) {
     return (ts/1000000)%10000000;
 }
 
-inline int64_t TSLong(int64_t ts) {
+inline TsType TSLong(TsType ts) {
     return (ts/1000000)%10000000000;
 }
 
@@ -139,14 +139,14 @@ class Node {
         }
     };
 
-typedef std::tuple<int64_t, int64_t, int, int> GeneralMeasurement2DronesKey;
+typedef std::tuple<TsType, TsType, int, int> GeneralMeasurement2DronesKey;
 
 class GeneralMeasurement2Drones {
 public:
-    uint64_t ts_a;
-    uint64_t ts_b;
-    uint64_t keyframe_id_a;
-    uint64_t keyframe_id_b;
+    TsType ts_a;
+    TsType ts_b;
+    FrameIdType keyframe_id_a;
+    FrameIdType keyframe_id_b;
     ros::Time stamp_a;
     ros::Time stamp_b;
     int id_a;
@@ -161,9 +161,11 @@ public:
     GeneralMeasurement2DronesKey key() {
         return GeneralMeasurement2DronesKey(ts_a, ts_b, id_a, id_b);
     }
+    
+    FrameIdType id; //unique identifier for loop edge.
 };
 
-class LoopConnection: public GeneralMeasurement2Drones {
+class LoopEdge: public GeneralMeasurement2Drones {
 public:
     int avg_count = 1;
     Pose relative_pose;
@@ -172,7 +174,7 @@ public:
     bool has_information_matrix = false;
     Eigen::Matrix<double, 6, 6> inf_mat;
     Eigen::Matrix<double, 6, 6> sqrt_inf_mat;
-    LoopConnection(swarm_msgs::LoopConnection loc, bool yaw_only = false) {
+    LoopEdge(swarm_msgs::LoopEdge loc, bool yaw_only = false) {
         id_a = loc.id_a;
         id_b = loc.id_b;
         ts_a = loc.ts_a.toNSec();
@@ -203,7 +205,7 @@ public:
         ang_std = Eigen::Vector3d(loc.ang_std.x, loc.ang_std.y, loc.ang_std.z);
     }
 
-    LoopConnection(swarm_msgs::LoopConnection loc, Eigen::Matrix<double, 6, 6> _inf_mat):
+    LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix<double, 6, 6> _inf_mat):
         inf_mat(_inf_mat)
     {
         id_a = loc.id_a;
@@ -228,7 +230,7 @@ public:
         sqrt_inf_mat = _inf_mat.cwiseSqrt();
     }
 
-    LoopConnection(const LoopConnection &loc) {
+    LoopEdge(const LoopEdge &loc) {
         id_a = loc.id_a;
         id_b = loc.id_b;
         ts_a = loc.ts_a;
@@ -252,13 +254,13 @@ public:
         res_count = 4;
     }
     
-    LoopConnection() {
+    LoopEdge() {
         meaturement_type = Loop;
         res_count = 0;
     }
 
-    LoopConnection invert_loop() const {
-        LoopConnection loop;
+    LoopEdge invert_loop() const {
+        LoopEdge loop;
         loop.id_a = id_b;
         loop.id_b = id_a;
 
@@ -402,9 +404,7 @@ public:
         res_count = 0;
     }
 };
-
 typedef std::vector<std::pair<int64_t, Pose>> DroneTraj;
-
 class NodeFrame {
 public:
     bool frame_available = false;
@@ -414,7 +414,7 @@ public:
     bool is_static = false;
     Node *node = nullptr;
     int id = -1;
-    uint64_t keyframe_id = -1;
+    FrameIdType keyframe_id = -1;
 
     DisMap dis_map;
     Pose self_pose;
@@ -433,7 +433,7 @@ public:
     std::map<int, Eigen::Vector3d> detected_nodes_angvar;
 
     ros::Time stamp;
-    int64_t ts;
+    TsType ts;
     bool is_valid = false;
 
     NodeFrame(Node *_node) :
@@ -564,12 +564,12 @@ class DroneTrajectory {
 
     std::vector<Swarm::NodeFrame> trajectory_frames;
     std::vector<Swarm::Pose> trajectory;
-    std::vector<int64_t> id_trajectory;
+    std::vector<uint64_t> id_trajectory;
     std::vector<double> cul_length;
-    std::vector<int64_t> ts_trajectory;
+    std::vector<TsType> ts_trajectory;
     std::vector<ros::Time> stamp_trajectory;
-    std::map<int64_t, int> ts2index;
-    std::map<int64_t, int> id2index;
+    std::map<TsType, int> ts2index;
+    std::map<FrameIdType, int> id2index;
     bool is_traj_ego_motion = true; //If false, the is PGO traj.
     int drone_id = -1;
     int traj_points = 0;
@@ -596,7 +596,7 @@ public:
         }
     }
 
-    int64_t get_ts(int index) const {
+    uint64_t get_ts(int index) const {
         return ts_trajectory.at(index);
     }
 
@@ -646,12 +646,12 @@ public:
 
     double trajectory_length_by_ts(int64_t tsa, int64_t tsb) const {
         if (ts2index.find(tsa) == ts2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsa not found");
+            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
             return -1;
         }
 
         if (ts2index.find(tsb) == ts2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsb not found");
+            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
             return -1;
         }
 
@@ -663,12 +663,12 @@ public:
 
     double trajectory_length_by_id(int64_t ida, int64_t idb) const {
         if (id2index.find(ida) == id2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsa not found");
+            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsa not found", ida, idb);
             return -1;
         }
 
         if (id2index.find(idb) == id2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %d-%d failed. tsb not found");
+            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsb not found", ida, idb);
             return -1;
         }
 
@@ -702,7 +702,7 @@ class SwarmFrame {
         int self_id = -1;
 
         ros::Time stamp;
-        int64_t ts;
+        TsType ts;
 
         int swarm_size() const {
             return id2nodeframe.size();
