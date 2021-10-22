@@ -169,8 +169,8 @@ class LoopEdge: public GeneralMeasurement2Drones {
 public:
     int avg_count = 1;
     Pose relative_pose;
-    Eigen::Vector3d pos_std;
-    Eigen::Vector3d ang_std;
+    Eigen::Vector3d pos_cov;
+    Eigen::Vector3d ang_cov;
     bool has_information_matrix = false;
     Eigen::Matrix<double, 6, 6> inf_mat;
     Eigen::Matrix<double, 6, 6> sqrt_inf_mat;
@@ -202,16 +202,16 @@ public:
         }
         meaturement_type = Loop;
 
-        pos_std = Eigen::Vector3d(loc.pos_std.x, loc.pos_std.y, loc.pos_std.z);
-        ang_std = Eigen::Vector3d(loc.ang_std.x, loc.ang_std.y, loc.ang_std.z);
+        pos_cov = Eigen::Vector3d(loc.pos_cov.x, loc.pos_cov.y, loc.pos_cov.z);
+        ang_cov = Eigen::Vector3d(loc.ang_cov.x, loc.ang_cov.y, loc.ang_cov.z);
     }
 
     Eigen::Vector3d get_pos_cov() const {
-        return pos_std.array()*pos_std.array();
+        return pos_cov;
     }
 
     Eigen::Vector3d get_ang_cov() const{
-        return ang_std.array()*ang_std.array();
+        return ang_cov;
     }
 
     Eigen::Matrix<double, 6, 1> get_cov_vec() const {
@@ -266,8 +266,8 @@ public:
         self_pose_a = loc.self_pose_a;
         self_pose_b = loc.self_pose_b;
 
-        pos_std = loc.pos_std;
-        ang_std = loc.ang_std;
+        pos_cov = loc.pos_cov;
+        ang_cov = loc.ang_cov;
 
         meaturement_type = Loop;
         res_count = 4;
@@ -298,8 +298,8 @@ public:
         loop.meaturement_type = Loop;
         loop.res_count = 4;
 
-        loop.pos_std = pos_std;
-        loop.ang_std = ang_std;
+        loop.pos_cov = pos_cov;
+        loop.ang_cov = ang_cov;
         
         return loop;
     }
@@ -309,14 +309,14 @@ public:
             return inf_mat;
         } else {
             Eigen::Matrix<double, 6, 6> _inf_mat;
-            Eigen::Vector3d pos_sqrt_inv(1/pos_std.x(), 1/pos_std.y(), 1/pos_std.z());
-            Eigen::Matrix<double, 3, 3> pos_sqrt_inf_mat = pos_sqrt_inv.asDiagonal();
+            Eigen::Vector3d pos_inv(1/pos_cov.x(), 1/pos_cov.y(), 1/pos_cov.z());
+            Eigen::Matrix<double, 3, 3> pos_inf_mat = pos_inv.asDiagonal();
             
-            Eigen::Vector3d ang_sqrt_inv(1/ang_std.x(), 1/ang_std.y(), 1/ang_std.z());
-            Eigen::Matrix<double, 3, 3> ang_sqrt_inf_mat = ang_sqrt_inv.asDiagonal();
+            Eigen::Vector3d ang_inv(1/ang_cov.x(), 1/ang_cov.y(), 1/ang_cov.z());
+            Eigen::Matrix<double, 3, 3> ang_inf_mat = ang_inv.asDiagonal();
             
-            _inf_mat.block<3, 3>(0, 0) = pos_sqrt_inf_mat*pos_sqrt_inf_mat;
-            _inf_mat.block<3, 3>(3, 3) = ang_sqrt_inf_mat*ang_sqrt_inf_mat;
+            _inf_mat.block<3, 3>(0, 0) = pos_inf_mat;
+            _inf_mat.block<3, 3>(3, 3) = ang_inf_mat;
             return _inf_mat;
         }
     }
@@ -326,10 +326,12 @@ public:
             return sqrt_inf_mat;
         } else {
             Eigen::Matrix<double, 6, 6> _sqrt_inf_mat;
-            Eigen::Vector3d pos_sqrt_inv(1/pos_std.x(), 1/pos_std.y(), 1/pos_std.z());
+            Eigen::Vector3d pos_sqrt_inv(1/pos_cov.x(), 1/pos_cov.y(), 1/pos_cov.z());
+            pos_sqrt_inv = pos_sqrt_inv.cwiseSqrt();
             Eigen::Matrix<double, 3, 3> pos_sqrt_inf_mat = pos_sqrt_inv.asDiagonal();
             
-            Eigen::Vector3d ang_sqrt_inv(1/ang_std.x(), 1/ang_std.y(), 1/ang_std.z());
+            Eigen::Vector3d ang_sqrt_inv(1/ang_cov.x(), 1/ang_cov.y(), 1/ang_cov.z());
+            ang_sqrt_inv = ang_sqrt_inv.cwiseSqrt();
             Eigen::Matrix<double, 3, 3> ang_sqrt_inf_mat = ang_sqrt_inv.asDiagonal();
             
             _sqrt_inf_mat.block<3, 3>(0, 0) = pos_sqrt_inf_mat;
@@ -614,9 +616,12 @@ class DroneTrajectory {
     int traj_points = 0;
     nav_msgs::Path ros_path;
     std::string frame_id = "world";
+
+    double pos_covariance_per_meter = 4e-3;
+    double yaw_covariance_per_meter = 4e-5;
 public:
-    DroneTrajectory(int _drone_id, bool is_ego_motion, std::string _frame_id="world"):
-        drone_id(_drone_id), is_traj_ego_motion(is_ego_motion), frame_id(_frame_id)
+    DroneTrajectory(int _drone_id, bool is_ego_motion, double _pos_covariance_per_meter=4e-3, double _yaw_covariance_per_meter = 4e-5, std::string _frame_id="world"):
+        drone_id(_drone_id), is_traj_ego_motion(is_ego_motion), frame_id(_frame_id),pos_covariance_per_meter(_pos_covariance_per_meter), yaw_covariance_per_meter(_yaw_covariance_per_meter)
     {
         ros_path.header.frame_id = frame_id;
     }
@@ -739,12 +744,12 @@ public:
     }
 
     //Ang Pos
-    Eigen::Matrix<double, 6, 1> covariance_between_ts(TsType tsa, TsType tsb, double cov_ang_pre_meter, double cov_pos_pre_meter) {
+    Eigen::Matrix<double, 6, 1> covariance_between_ts(TsType tsa, TsType tsb) {
         double len = trajectory_length_by_ts(tsa, tsb);
         Eigen::Matrix<double, 6, 1> cov_vec;
         cov_vec.setIdentity();
-        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*cov_ang_pre_meter;
-        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*cov_pos_pre_meter;
+        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*pos_covariance_per_meter;
+        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*yaw_covariance_per_meter;
         return cov_vec;
     }
 

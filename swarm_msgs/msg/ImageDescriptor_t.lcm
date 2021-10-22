@@ -107,6 +107,6 @@ struct LoopEdge_t {
     Pose_t self_pose_b;
     int64_t id;
     int32_t pnp_inlier_num;
-    Point3d_t pos_std;
-    Point3d_t ang_std;
+    Point3d_t pos_cov;
+    Point3d_t ang_cov;
 }

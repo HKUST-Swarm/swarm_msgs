@@ -39,9 +39,9 @@ class LoopEdge_t
 
         int32_t    pnp_inlier_num;
 
-        Point3d_t  pos_std;
+        Point3d_t  pos_cov;
 
-        Point3d_t  ang_std;
+        Point3d_t  ang_cov;
 
     public:
         /**
@@ -166,10 +166,10 @@ int LoopEdge_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->pnp_inlier_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->pos_std._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->pos_cov._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->ang_std._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->ang_cov._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -206,10 +206,10 @@ int LoopEdge_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->pnp_inlier_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->pos_std._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->pos_cov._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->ang_std._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->ang_cov._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -227,8 +227,8 @@ int LoopEdge_t::_getEncodedSizeNoHash() const
     enc_size += this->self_pose_b._getEncodedSizeNoHash();
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += this->pos_std._getEncodedSizeNoHash();
-    enc_size += this->ang_std._getEncodedSizeNoHash();
+    enc_size += this->pos_cov._getEncodedSizeNoHash();
+    enc_size += this->ang_cov._getEncodedSizeNoHash();
     return enc_size;
 }
 
@@ -240,7 +240,7 @@ uint64_t LoopEdge_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, LoopEdge_t::getHash };
 
-    uint64_t hash = 0xa2818a7601cb8174LL +
+    uint64_t hash = 0xa2818aaadea26f74LL +
          Time_t::_computeHash(&cp) +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
