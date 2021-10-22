@@ -15,8 +15,6 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 
-// #define ERROR_NORMLIZED 0.01
-#define ERROR_NORMLIZED 1.0
 #define UNIDENTIFIED_MIN_ID 1000
 #define NO_ANNETAPOS
 #define ENABLE_DETECTION
@@ -748,8 +746,8 @@ public:
         double len = trajectory_length_by_ts(tsa, tsb);
         Eigen::Matrix<double, 6, 1> cov_vec;
         cov_vec.setIdentity();
-        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*pos_covariance_per_meter;
-        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*yaw_covariance_per_meter;
+        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*pos_covariance_per_meter*len;
+        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*yaw_covariance_per_meter*len;
         return cov_vec;
     }
 
