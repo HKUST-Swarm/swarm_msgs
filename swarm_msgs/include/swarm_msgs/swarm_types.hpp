@@ -352,6 +352,8 @@ public:
             if (id_a == edge2.id_b && id_b == edge2.id_a) {
                 return 2;
             }
+        } else {
+            return 1;
         }
         return 0;
     }
