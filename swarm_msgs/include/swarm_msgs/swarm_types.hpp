@@ -304,7 +304,7 @@ public:
         set_covariance(loc.cov_mat);
 
         meaturement_type = Loop;
-        res_count = 4;
+        res_count = loc.res_count;
     }
     
     LoopEdge() {
@@ -793,16 +793,17 @@ public:
     Eigen::Matrix6d covariance_between_ts(TsType tsa, TsType tsb) const {
         double len = trajectory_length_by_ts(tsa, tsb);
         Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
-        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
-        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
+        // std::cout << "length " << len << "Cov\n" << cov_mat << std::endl;
         return cov_mat;
     }
 
     Eigen::Matrix6d covariance_between_appro_ts(TsType tsa, TsType tsb) const {
         double len = trajectory_length_by_appro_ts(tsa, tsb);
         Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
-        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
-        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
         return cov_mat;
     }
 
