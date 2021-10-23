@@ -147,8 +147,8 @@ public:
     FrameIdType keyframe_id_b;
     ros::Time stamp_a;
     ros::Time stamp_b;
-    int id_a;
-    int id_b;
+    int id_a; // drone_id
+    int id_b; // drone_id
     Pose self_pose_a;
     Pose self_pose_b;
     int res_count = 0;
@@ -605,7 +605,6 @@ class DroneTrajectory {
 
     std::vector<Swarm::NodeFrame> trajectory_frames;
     std::vector<Swarm::Pose> trajectory;
-    std::vector<uint64_t> id_trajectory;
     std::vector<double> cul_length;
     std::vector<TsType> ts_trajectory;
     std::vector<ros::Time> stamp_trajectory;
@@ -649,7 +648,33 @@ public:
     }
 
     Swarm::NodeFrame get_node_frame(int index) const {
+        assert(index < trajectory_frames.size() && "index out of range");
         return trajectory_frames.at(index);
+    }
+
+    void push(ros::Time stamp, const Swarm::Pose & pose) {
+        if (cul_length.size() == 0) {
+            cul_length.push_back(0);
+        } else {
+            Swarm::Pose last = trajectory.back();
+            auto dpose = Swarm::Pose::DeltaPose(last, pose);
+            cul_length.push_back(dpose.pos().norm()+cul_length.back());
+        }
+
+        auto ts = stamp.toNSec();
+        trajectory.push_back(pose);
+        ts_trajectory.push_back(ts);
+        stamp_trajectory.push_back(stamp);
+        ts2index[ts] = ts_trajectory.size() - 1;
+
+        geometry_msgs::PoseStamped _pose_stamped;
+        _pose_stamped.header.stamp = stamp;
+        _pose_stamped.header.frame_id = frame_id;
+        ros_path.header.stamp = _pose_stamped.header.stamp;
+        _pose_stamped.pose = pose.to_ros_pose();
+        ros_path.poses.push_back(_pose_stamped);
+
+        traj_points++;
     }
 
     void push(const Swarm::NodeFrame & nf, const Swarm::Pose & pose) {
@@ -663,7 +688,6 @@ public:
 
         trajectory_frames.push_back(nf);
         trajectory.push_back(pose);
-        id_trajectory.push_back(nf.id);
         ts_trajectory.push_back(nf.ts);
         stamp_trajectory.push_back(nf.stamp);
         ts2index[nf.ts] = trajectory_frames.size() - 1;
@@ -688,23 +712,27 @@ public:
         return cul_length.back();
     }
 
-    Swarm::Pose get_relative_pose_by_ts(TsType tsa, TsType tsb) const {
+    std::pair<Swarm::Pose, Eigen::Matrix<double, 6, 1>> get_relative_pose_by_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
             exit(-1);
-            return Swarm::Pose();
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix<double, 6, 1>());
         }
 
         if (ts2index.find(tsb) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
             exit(-1);
-            return Swarm::Pose();
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix<double, 6, 1>());
         }
+
 
         auto indexa = ts2index.at(tsa);
         auto indexb = ts2index.at(tsb);
 
-        return Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb));
+
+        auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb));
+        // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.tostr().c_str());
+        return std::make_pair(rp, covariance_between_ts(tsa, tsb));
     }
 
     double trajectory_length_by_ts(TsType tsa, TsType tsb) const {
@@ -744,12 +772,12 @@ public:
     }
 
     //Ang Pos
-    Eigen::Matrix<double, 6, 1> covariance_between_ts(TsType tsa, TsType tsb) {
+    Eigen::Matrix<double, 6, 1> covariance_between_ts(TsType tsa, TsType tsb) const {
         double len = trajectory_length_by_ts(tsa, tsb);
         Eigen::Matrix<double, 6, 1> cov_vec;
-        cov_vec.setIdentity();
-        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*pos_covariance_per_meter*len;
-        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*yaw_covariance_per_meter*len;
+        cov_vec.setOnes();
+        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*yaw_covariance_per_meter*len;
+        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*pos_covariance_per_meter*len;
         return cov_vec;
     }
 

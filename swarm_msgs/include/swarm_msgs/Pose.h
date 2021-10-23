@@ -423,4 +423,12 @@ inline std::ostream& operator<<(std::ostream& output, Pose & pose) {
 // typedef std::pair<TsType, Pose> PoseStamped;
 // typedef std::vector<PoseStamped> Path;
 
+template <typename Vec>
+inline double computeSquaredMahalanobisDistance(Vec logmap, Vec cov_vec) {
+    auto inf_vec = cov_vec.cwiseInverse();
+    auto inf_mat = inf_vec.asDiagonal();
+    auto ret = logmap.transpose() * inf_mat * logmap;
+    return std::sqrt(ret(0, 0));
+}
+
 } // namespace Swarm
