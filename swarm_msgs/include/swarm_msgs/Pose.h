@@ -8,6 +8,11 @@
 
 using namespace Eigen;
 
+namespace Eigen {
+    typedef Matrix<double, 6, 6> Matrix6d;
+    typedef Matrix<double, 6, 1> Vector6d;
+};
+
 inline Vector3d quat2eulers(const Quaterniond &quat) {
     Vector3d rpy;
     rpy.x() = atan2(2 * (quat.w() * quat.x() + quat.y() * quat.z()),
@@ -381,15 +386,16 @@ public:
         attitude = attitude_yaw_only;
     }
 
-    Matrix<double, 6, 1> log_map() {
+    Vector6d log_map() {
+        //T Q
         //Modified from https://github.com/borglab/gtsam/blob/develop/gtsam/geometry/Pose3.cpp
         const Vector3d w = Logmap(att());
         const Vector3d T = pos();
         const double t = w.norm();
         if (t < 1e-10) {
-            Matrix<double, 6, 1> ret;
-            ret.block<3, 1>(0, 0) = w;
-            ret.block<3, 1>(3, 0) = T;
+            Vector6d ret;
+            ret.block<3, 1>(0, 0) = T;
+            ret.block<3, 1>(3, 0) = w;
             return ret;
         } else {
             const Matrix3d W = skewSymmetric(w / t);
@@ -398,9 +404,9 @@ public:
             const double Tan = tan(0.5 * t);
             const Vector3d WT = W * T;
             const Vector3d u = T - (0.5 * t) * WT + (1 - t / (2. * Tan)) * (W * WT);
-            Matrix<double, 6, 1> ret;
-            ret.block<3, 1>(0, 0) = w;
-            ret.block<3, 1>(3, 0) = u;
+            Vector6d ret;
+            ret.block<3, 1>(0, 0) = u;
+            ret.block<3, 1>(3, 0) = w;
             return ret;
         }
     }
@@ -423,11 +429,9 @@ inline std::ostream& operator<<(std::ostream& output, Pose & pose) {
 // typedef std::pair<TsType, Pose> PoseStamped;
 // typedef std::vector<PoseStamped> Path;
 
-template <typename Vec>
-inline double computeSquaredMahalanobisDistance(Vec logmap, Vec cov_vec) {
-    auto inf_vec = cov_vec.cwiseInverse();
-    auto inf_mat = inf_vec.asDiagonal();
-    auto ret = logmap.transpose() * inf_mat * logmap;
+template <typename Vec, typename Mat>
+inline double computeSquaredMahalanobisDistance(Vec logmap, Mat cov_mat) {
+    auto ret = logmap.transpose() * cov_mat.inverse() * logmap;
     return std::sqrt(ret(0, 0));
 }
 

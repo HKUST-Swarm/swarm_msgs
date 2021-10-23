@@ -35,6 +35,30 @@ inline TsType TSLong(TsType ts) {
     return (ts/1000000)%10000000000;
 }
 
+template <typename T>
+long search_closest(const std::vector<T>& sorted_array, double x) {
+
+    auto iter_geq = std::lower_bound(
+        sorted_array.begin(), 
+        sorted_array.end(), 
+        x
+    );
+
+    if (iter_geq == sorted_array.begin()) {
+        return 0;
+    }
+
+    double a = *(iter_geq - 1);
+    double b = *(iter_geq);
+
+    if (fabs(x - a) < fabs(x - b)) {
+        return iter_geq - sorted_array.begin() - 1;
+    }
+
+    return iter_geq - sorted_array.begin();
+
+}
+
 
 inline Eigen::Matrix<double, 2, 3> tangent_base_for_unit_detect(const Eigen::Vector3d & pts_j) {
     Eigen::Matrix<double, 2, 3> tangent_base;
@@ -167,11 +191,10 @@ class LoopEdge: public GeneralMeasurement2Drones {
 public:
     int avg_count = 1;
     Pose relative_pose;
-    Eigen::Vector3d pos_cov;
-    Eigen::Vector3d ang_cov;
     bool has_information_matrix = false;
-    Eigen::Matrix<double, 6, 6> inf_mat;
-    Eigen::Matrix<double, 6, 6> sqrt_inf_mat;
+    Matrix6d inf_mat;
+    Matrix6d sqrt_inf_mat;
+    Matrix6d cov_mat;
     LoopEdge(swarm_msgs::LoopEdge loc, bool yaw_only = false) {
         id = loc.id;
         id_a = loc.id_a;
@@ -200,27 +223,41 @@ public:
         }
         meaturement_type = Loop;
 
-        pos_cov = Eigen::Vector3d(loc.pos_cov.x, loc.pos_cov.y, loc.pos_cov.z);
-        ang_cov = Eigen::Vector3d(loc.ang_cov.x, loc.ang_cov.y, loc.ang_cov.z);
+        Matrix6d cov = Matrix6d::Zero();
+        cov(0, 0) = loc.pos_cov.x;
+        cov(1, 1) = loc.pos_cov.y;
+        cov(2, 2) = loc.pos_cov.z;
+
+        cov(3, 3) = loc.ang_cov.x;
+        cov(4, 4) = loc.ang_cov.y;
+        cov(5, 5) = loc.ang_cov.z;
+        
+        set_covariance(cov);
     }
 
-    Eigen::Vector3d get_pos_cov() const {
-        return pos_cov;
+    //T, Q
+    Matrix6d get_covariance() const {
+        return cov_mat;
     }
 
-    Eigen::Vector3d get_ang_cov() const{
-        return ang_cov;
+    //T, Q
+    Matrix4d get_sqrt_information_4d() const {
+        Matrix4d _sqrt_inf = Matrix4d::Zero();
+        _sqrt_inf.block<3, 3>(0, 0) = sqrt_inf_mat.block<3, 3>(0, 0);
+        _sqrt_inf(3, 3) = sqrt_inf_mat(5, 5);
+        return _sqrt_inf;
     }
 
-    Eigen::Matrix<double, 6, 1> get_cov_vec() const {
-        Eigen::Matrix<double, 6, 1> cov_vec;
-        cov_vec.setIdentity();
-        cov_vec.block<3, 1>(0, 0) = get_ang_cov();
-        cov_vec.block<3, 1>(3, 0) = get_pos_cov();
-        return cov_vec;
+    void set_covariance(const Matrix6d & cov) {
+        cov_mat = cov;
+        inf_mat = cov.inverse();
+        sqrt_inf_mat = inf_mat.cwiseAbs().cwiseSqrt();
+        // std::cout << "cov_mat" << cov_mat << std::endl;
+        // std::cout << "inf_mat" << inf_mat << std::endl;
+        // std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
     }
 
-    LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix<double, 6, 6> _inf_mat):
+    LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix6d _inf_mat):
         inf_mat(_inf_mat)
     {
         id = loc.id;
@@ -264,8 +301,7 @@ public:
         self_pose_a = loc.self_pose_a;
         self_pose_b = loc.self_pose_b;
 
-        pos_cov = loc.pos_cov;
-        ang_cov = loc.ang_cov;
+        set_covariance(loc.cov_mat);
 
         meaturement_type = Loop;
         res_count = 4;
@@ -296,46 +332,17 @@ public:
         loop.meaturement_type = Loop;
         loop.res_count = 4;
 
-        loop.pos_cov = pos_cov;
-        loop.ang_cov = ang_cov;
+        loop.set_covariance(cov_mat);
         
         return loop;
     }
 
-    Eigen::Matrix<double, 6, 6> information_matrix() const {
-        if (has_information_matrix) {
-            return inf_mat;
-        } else {
-            Eigen::Matrix<double, 6, 6> _inf_mat;
-            Eigen::Vector3d pos_inv(1/pos_cov.x(), 1/pos_cov.y(), 1/pos_cov.z());
-            Eigen::Matrix<double, 3, 3> pos_inf_mat = pos_inv.asDiagonal();
-            
-            Eigen::Vector3d ang_inv(1/ang_cov.x(), 1/ang_cov.y(), 1/ang_cov.z());
-            Eigen::Matrix<double, 3, 3> ang_inf_mat = ang_inv.asDiagonal();
-            
-            _inf_mat.block<3, 3>(0, 0) = pos_inf_mat;
-            _inf_mat.block<3, 3>(3, 3) = ang_inf_mat;
-            return _inf_mat;
-        }
+    Eigen::Matrix6d information_matrix() const {
+        return inf_mat;
     }
 
-    Eigen::Matrix<double, 6, 6> sqrt_information_matrix() const {
-        if (has_information_matrix) {
-            return sqrt_inf_mat;
-        } else {
-            Eigen::Matrix<double, 6, 6> _sqrt_inf_mat;
-            Eigen::Vector3d pos_sqrt_inv(1/pos_cov.x(), 1/pos_cov.y(), 1/pos_cov.z());
-            pos_sqrt_inv = pos_sqrt_inv.cwiseSqrt();
-            Eigen::Matrix<double, 3, 3> pos_sqrt_inf_mat = pos_sqrt_inv.asDiagonal();
-            
-            Eigen::Vector3d ang_sqrt_inv(1/ang_cov.x(), 1/ang_cov.y(), 1/ang_cov.z());
-            ang_sqrt_inv = ang_sqrt_inv.cwiseSqrt();
-            Eigen::Matrix<double, 3, 3> ang_sqrt_inf_mat = ang_sqrt_inv.asDiagonal();
-            
-            _sqrt_inf_mat.block<3, 3>(0, 0) = pos_sqrt_inf_mat;
-            _sqrt_inf_mat.block<3, 3>(3, 3) = ang_sqrt_inf_mat;
-            return _sqrt_inf_mat;
-        }
+    Eigen::Matrix6d sqrt_information_matrix() const {
+        return sqrt_inf_mat;
     }
 
     bool is_inter_loop() const { 
@@ -462,8 +469,6 @@ public:
     Pose estimated_pose;
 
     Eigen::Vector3d self_vel = Eigen::Vector3d(0, 0, 0);
-    Eigen::Vector3d position_std_to_last;
-    double yaw_std_to_last;
     std::map<int, bool> enabled_detection;
     std::map<int, bool> enabled_distance;
     std::map<int, bool> outlier_distance;
@@ -478,7 +483,7 @@ public:
     bool is_valid = false;
 
     NodeFrame(Node *_node) :
-            node(_node), position_std_to_last(0.01, 0.01, 0.01), yaw_std_to_last(0.01) {
+            node(_node) {
         is_static = _node->is_static_node();
     }
 
@@ -712,27 +717,40 @@ public:
         return cul_length.back();
     }
 
-    std::pair<Swarm::Pose, Eigen::Matrix<double, 6, 1>> get_relative_pose_by_ts(TsType tsa, TsType tsb) const {
+    std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
             exit(-1);
-            return std::make_pair(Swarm::Pose(), Eigen::Matrix<double, 6, 1>());
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
         }
 
         if (ts2index.find(tsb) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
             exit(-1);
-            return std::make_pair(Swarm::Pose(), Eigen::Matrix<double, 6, 1>());
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
         }
 
 
         auto indexa = ts2index.at(tsa);
         auto indexb = ts2index.at(tsb);
 
-
         auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb));
         // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.tostr().c_str());
         return std::make_pair(rp, covariance_between_ts(tsa, tsb));
+    }
+
+    double trajectory_length_by_appro_ts(TsType tsa, TsType tsb) const {
+        if (ts2index.find(tsa) != ts2index.end() && ts2index.find(tsb) != ts2index.end()) {
+            return trajectory_length_by_ts(tsa, tsb);
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        auto indexb = search_closest(ts_trajectory, tsb);
+
+        // ROS_INFO("Appro ts(ms) %d<->%d find %d<->%d", tsa/1000000, tsb/1000000, 
+        //     ts_trajectory[indexa]/1000000, 
+        //     ts_trajectory[indexb]/1000000);
+        return fabs(cul_length[indexb] - cul_length[indexa]);
     }
 
     double trajectory_length_by_ts(TsType tsa, TsType tsb) const {
@@ -772,13 +790,20 @@ public:
     }
 
     //Ang Pos
-    Eigen::Matrix<double, 6, 1> covariance_between_ts(TsType tsa, TsType tsb) const {
+    Eigen::Matrix6d covariance_between_ts(TsType tsa, TsType tsb) const {
         double len = trajectory_length_by_ts(tsa, tsb);
-        Eigen::Matrix<double, 6, 1> cov_vec;
-        cov_vec.setOnes();
-        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*yaw_covariance_per_meter*len;
-        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*pos_covariance_per_meter*len;
-        return cov_vec;
+        Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
+        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        return cov_mat;
+    }
+
+    Eigen::Matrix6d covariance_between_appro_ts(TsType tsa, TsType tsb) const {
+        double len = trajectory_length_by_appro_ts(tsa, tsb);
+        Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
+        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        return cov_mat;
     }
 
     const nav_msgs::Path & get_ros_path() const {
