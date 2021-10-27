@@ -717,7 +717,7 @@ public:
         return cul_length.back();
     }
 
-    std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_ts(TsType tsa, TsType tsb) const {
+    std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_ts(TsType tsa, TsType tsb, bool pose_4d=false) const {
         if (ts2index.find(tsa) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
             exit(-1);
@@ -734,7 +734,7 @@ public:
         auto indexa = ts2index.at(tsa);
         auto indexb = ts2index.at(tsb);
 
-        auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb));
+        auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb), pose_4d);
         // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.tostr().c_str());
         return std::make_pair(rp, covariance_between_ts(tsa, tsb));
     }

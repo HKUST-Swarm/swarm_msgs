@@ -23,6 +23,13 @@ inline Vector3d quat2eulers(const Quaterniond &quat) {
     return rpy;
 }
 
+//rpy2quat
+inline Quaterniond eulers2quat(const Vector3d eul) {
+    return Eigen::AngleAxisd(eul.z(), Eigen::Vector3d::UnitZ())
+        * Eigen::AngleAxisd(eul.y(), Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(eul.x(), Eigen::Vector3d::UnitX());
+}
+
 
 inline Matrix3d skewSymmetric(Vector3d w) {
   Matrix3d ret;
