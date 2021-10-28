@@ -369,7 +369,7 @@ public:
 class DroneDetection: public GeneralMeasurement2Drones {
 
 public:
-    Eigen::Matrix<double, 2, 3> detect_tan_base;
+    Eigen::Matrix<double, 2, 3, RowMajor> detect_tan_base;
     Eigen::Vector3d p = Eigen::Vector3d::Zero();
     double inv_dep = 0;
     double probaility = 0;
@@ -383,11 +383,11 @@ public:
     Pose dpose_self_a;
     Pose dpose_self_b;
 
-    Eigen::Vector3d extrinsic;
-    Eigen::Vector3d centr_of_detection_position;
+    Pose extrinsic; //Extrinsic from IMU to Cam
+    Pose GC = Swarm::Pose(Vector3d(-0.06, 0, 0), Quaterniond::Identity()); //Extrinsic from IMU to GC(e.g. detection center.)
 
-    DroneDetection(const swarm_msgs::node_detected_xyzyaw & nd, bool _enable_dpose, Eigen::Vector3d CG, bool _enable_depth = true):
-        enable_dpose(_enable_dpose), centr_of_detection_position(0, 0, 0.02)
+    DroneDetection(const swarm_msgs::node_detected_xyzyaw & nd, bool _enable_dpose, Eigen::Vector3d _CG, bool _enable_depth = true):
+        enable_dpose(_enable_dpose)
     {
         id_a = nd.self_drone_id;
         id_b = nd.remote_drone_id;
@@ -399,9 +399,10 @@ public:
 
         probaility = nd.probaility;
         
-        extrinsic = Pose(nd.camera_extrinsic).pos();
+        extrinsic = Pose(nd.camera_extrinsic);
         self_pose_a = Pose(nd.local_pose_self);
-        self_pose_b = Pose(nd.local_pose_remote)*Pose(-CG, Eigen::Quaterniond::Identity());
+        self_pose_b = Pose(nd.local_pose_remote)*Pose(-_CG, Eigen::Quaterniond::Identity());
+        Pose GC = Swarm::Pose(_CG, Quaterniond::Identity()); //Extrinsic from IMU to GC(e.g. detection center.)
         inv_dep = nd.inv_dep;
         //Here hacked
         p = Eigen::Vector3d(nd.dpos.x, nd.dpos.y, nd.dpos.z);
@@ -420,32 +421,6 @@ public:
         detect_tan_base = tangent_base_for_unit_detect(p);
     }
 
-
-    DroneDetection(const DroneDetection & dronedet):
-        extrinsic(dronedet.extrinsic), centr_of_detection_position(dronedet.centr_of_detection_position) {
-        id_a = dronedet.id_a;
-        id_b = dronedet.id_b;
-        ts_a = dronedet.ts_a;
-        ts_b = dronedet.ts_b;
-
-        stamp_a = dronedet.stamp_a;
-        stamp_b = dronedet.stamp_b;
-
-        probaility = dronedet.probaility;
-
-        self_pose_a = dronedet.self_pose_a;
-        self_pose_b = dronedet.self_pose_b;
-
-        inv_dep = dronedet.inv_dep;
-        p = dronedet.p;
-        p.normalize();
-        meaturement_type = Detection;
-
-        enable_depth = dronedet.enable_depth;
-        res_count = dronedet.res_count;
-
-        detect_tan_base = dronedet.detect_tan_base;
-    }
 
     DroneDetection() {
         meaturement_type = Detection;
@@ -738,6 +713,27 @@ public:
         // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.tostr().c_str());
         return std::make_pair(rp, covariance_between_ts(tsa, tsb));
     }
+
+    Swarm::Pose pose_by_appro_ts(TsType tsa, double & dt) const {
+        if (ts2index.find(tsa) != ts2index.end()) {
+            dt = 0;
+            return trajectory.at(ts2index.at(tsa));
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        dt = (ts_trajectory[indexa] - tsa)/1e9;
+        return trajectory.at(indexa);
+    }
+
+    Swarm::Pose pose_by_appro_ts(TsType tsa) const {
+        if (ts2index.find(tsa) != ts2index.end()) {
+            return trajectory.at(ts2index.at(tsa));
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        return trajectory.at(indexa);
+    }
+
 
     double trajectory_length_by_appro_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) != ts2index.end() && ts2index.find(tsb) != ts2index.end()) {
