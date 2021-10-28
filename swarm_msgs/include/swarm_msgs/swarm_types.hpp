@@ -422,7 +422,7 @@ public:
 
 
     DroneDetection(const DroneDetection & dronedet):
-        extrinsic(0, 0.0, 0.1), centr_of_detection_position(0, 0, 0.02) {
+        extrinsic(dronedet.extrinsic), centr_of_detection_position(dronedet.centr_of_detection_position) {
         id_a = dronedet.id_a;
         id_b = dronedet.id_b;
         ts_a = dronedet.ts_a;
