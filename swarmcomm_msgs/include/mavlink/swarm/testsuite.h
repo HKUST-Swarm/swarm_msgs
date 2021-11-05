@@ -231,15 +231,19 @@ static void mavlink_test_node_detected(uint8_t system_id, uint8_t component_id, 
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
     mavlink_node_detected_t packet_in = {
-        963497464,963497672,73.0,101.0,129.0,157.0,185.0,213.0,241.0,19107,19211
+        93372036854775807LL,963497880,963498088,129.0,157.0,185.0,213.0,241.0,269.0,297.0,325.0,353.0,381.0,20147,20251
     };
     mavlink_node_detected_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
+        packet1.id = packet_in.id;
         packet1.lps_time = packet_in.lps_time;
         packet1.target_id = packet_in.target_id;
         packet1.x = packet_in.x;
         packet1.y = packet_in.y;
         packet1.z = packet_in.z;
+        packet1.cam_x = packet_in.cam_x;
+        packet1.cam_y = packet_in.cam_y;
+        packet1.cam_z = packet_in.cam_z;
         packet1.local_pose_self_x = packet_in.local_pose_self_x;
         packet1.local_pose_self_y = packet_in.local_pose_self_y;
         packet1.local_pose_self_z = packet_in.local_pose_self_z;
@@ -260,12 +264,12 @@ static void mavlink_test_node_detected(uint8_t system_id, uint8_t component_id, 
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_node_detected_pack(system_id, component_id, &msg , packet1.lps_time , packet1.target_id , packet1.x , packet1.y , packet1.z , packet1.prob , packet1.inv_dep , packet1.local_pose_self_x , packet1.local_pose_self_y , packet1.local_pose_self_z , packet1.local_pose_self_yaw );
+    mavlink_msg_node_detected_pack(system_id, component_id, &msg , packet1.lps_time , packet1.id , packet1.target_id , packet1.x , packet1.y , packet1.z , packet1.prob , packet1.inv_dep , packet1.cam_x , packet1.cam_y , packet1.cam_z , packet1.local_pose_self_x , packet1.local_pose_self_y , packet1.local_pose_self_z , packet1.local_pose_self_yaw );
     mavlink_msg_node_detected_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_node_detected_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.lps_time , packet1.target_id , packet1.x , packet1.y , packet1.z , packet1.prob , packet1.inv_dep , packet1.local_pose_self_x , packet1.local_pose_self_y , packet1.local_pose_self_z , packet1.local_pose_self_yaw );
+    mavlink_msg_node_detected_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.lps_time , packet1.id , packet1.target_id , packet1.x , packet1.y , packet1.z , packet1.prob , packet1.inv_dep , packet1.cam_x , packet1.cam_y , packet1.cam_z , packet1.local_pose_self_x , packet1.local_pose_self_y , packet1.local_pose_self_z , packet1.local_pose_self_yaw );
     mavlink_msg_node_detected_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -278,7 +282,7 @@ static void mavlink_test_node_detected(uint8_t system_id, uint8_t component_id, 
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_node_detected_send(MAVLINK_COMM_1 , packet1.lps_time , packet1.target_id , packet1.x , packet1.y , packet1.z , packet1.prob , packet1.inv_dep , packet1.local_pose_self_x , packet1.local_pose_self_y , packet1.local_pose_self_z , packet1.local_pose_self_yaw );
+    mavlink_msg_node_detected_send(MAVLINK_COMM_1 , packet1.lps_time , packet1.id , packet1.target_id , packet1.x , packet1.y , packet1.z , packet1.prob , packet1.inv_dep , packet1.cam_x , packet1.cam_y , packet1.cam_z , packet1.local_pose_self_x , packet1.local_pose_self_y , packet1.local_pose_self_z , packet1.local_pose_self_yaw );
     mavlink_msg_node_detected_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }

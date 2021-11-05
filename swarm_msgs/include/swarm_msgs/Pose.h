@@ -345,14 +345,21 @@ public:
         attitude = attitude_yaw_only = (Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
-    std::string tostr() const {
+    std::string tostr(bool for_file=false) const {
         auto _rpy = rpy();
-        char _ret[100] = {0};
+        char _ret[128] = {0};
+        if (for_file) {
+            sprintf(_ret, "%3.4f %3.4f %3.4f %3.4f %3.4f %3.4f %3.4f",
+               position.x(), position.y(), position.z(),
+               attitude.w(), attitude.x(), attitude.y(), attitude.z());
+
+        } else {
         sprintf(_ret, "T [%+3.3f,%+3.3f,%+3.3f] YPR [%+3.1f,%+3.1f,%+3.1f]",
                position.x(), position.y(), position.z(),
                _rpy.z() * 57.3,
                _rpy.y() * 57.3,
                _rpy.x() * 57.3);
+        }
         return std::string(_ret);
     }
     void print() const {

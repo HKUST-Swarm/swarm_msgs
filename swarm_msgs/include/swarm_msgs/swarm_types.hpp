@@ -185,6 +185,26 @@ public:
     }
     
     FrameIdType id; //unique identifier for loop edge.
+
+    bool is_inter_loop() const { 
+        return id_a != id_b;
+    }
+
+    //Same direction, return 1 else 2
+    int same_robot_pair(GeneralMeasurement2Drones edge2) const {
+        if (is_inter_loop()) {
+            if (id_a == edge2.id_a && id_b == edge2.id_b) {
+                return 1;
+            }
+
+            if (id_a == edge2.id_b && id_b == edge2.id_a) {
+                return 2;
+            }
+        } else {
+            return 1;
+        }
+        return 0;
+    }
 };
 
 class LoopEdge: public GeneralMeasurement2Drones {
@@ -344,26 +364,7 @@ public:
     Eigen::Matrix6d sqrt_information_matrix() const {
         return sqrt_inf_mat;
     }
-
-    bool is_inter_loop() const { 
-        return id_a != id_b;
-    }
-
-    //Same direction, return 1 else 2
-    int same_robot_pair(LoopEdge edge2) const {
-        if (is_inter_loop()) {
-            if (id_a == edge2.id_a && id_b == edge2.id_b) {
-                return 1;
-            }
-
-            if (id_a == edge2.id_b && id_b == edge2.id_a) {
-                return 2;
-            }
-        } else {
-            return 1;
-        }
-        return 0;
-    }
+    
 };
 
 class DroneDetection: public GeneralMeasurement2Drones {
@@ -389,6 +390,7 @@ public:
     DroneDetection(const swarm_msgs::node_detected_xyzyaw & nd, bool _enable_dpose, Eigen::Vector3d _CG, bool _enable_depth = true):
         enable_dpose(_enable_dpose)
     {
+        id = nd.id;
         id_a = nd.self_drone_id;
         id_b = nd.remote_drone_id;
         ts_a = nd.header.stamp.toNSec();
@@ -894,3 +896,30 @@ class SwarmFrame {
 
     };
 };
+
+#include <chrono> 
+
+class TicToc
+{
+  public:
+    TicToc()
+    {
+        tic();
+    }
+
+    void tic()
+    {
+        start = std::chrono::system_clock::now();
+    }
+
+    double toc()
+    {
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        return elapsed_seconds.count() * 1000;
+    }
+
+  private:
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+};
+
