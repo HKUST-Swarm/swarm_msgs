@@ -10,6 +10,7 @@
 #include <set>
 #include <swarm_msgs/LoopEdge.h>
 #include <swarm_msgs/node_detected_xyzyaw.h>
+#include <swarm_msgs/node_detected.h>
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -215,6 +216,7 @@ public:
     Matrix6d inf_mat;
     Matrix6d sqrt_inf_mat;
     Matrix6d cov_mat;
+
     LoopEdge(swarm_msgs::LoopEdge loc, bool yaw_only = false) {
         id = loc.id;
         id_a = loc.id_a;
@@ -255,6 +257,35 @@ public:
         set_covariance(cov);
     }
 
+    LoopEdge(const swarm_msgs::node_detected & loc, bool yaw_only=false)  {
+        id = loc.id;
+        id_a = loc.self_drone_id;
+        id_b = loc.remote_drone_id;
+        ts_a = loc.header.stamp.toNSec();
+        ts_b = loc.header.stamp.toNSec();
+
+        stamp_a = loc.header.stamp;
+        stamp_b = loc.header.stamp;
+
+        relative_pose = Pose(loc.relative_pose.pose);
+
+        self_pose_a = Pose(loc.local_pose_self);
+        self_pose_b = Pose(loc.local_pose_remote); //Maybe absent we create
+
+        if (yaw_only) {
+            relative_pose.set_yaw_only();
+            self_pose_a.set_yaw_only();
+            self_pose_b.set_yaw_only();
+            res_count = 4;
+        } else {
+            res_count = 6;
+        }
+        meaturement_type = Loop;
+
+        const Eigen::Map<const Eigen::Matrix<double,6,6,RowMajor>> cov(loc.relative_pose.covariance.data());
+        set_covariance(cov);
+    }
+
     //T, Q
     Matrix6d get_covariance() const {
         return cov_mat;
@@ -276,6 +307,7 @@ public:
         // std::cout << "inf_mat" << inf_mat << std::endl;
         // std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
     }
+
 
     LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix6d _inf_mat):
         inf_mat(_inf_mat)

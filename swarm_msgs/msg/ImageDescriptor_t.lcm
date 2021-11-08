@@ -100,13 +100,24 @@ struct FisheyeFrameDescriptor_t {
 struct LoopEdge_t {
     Time_t ts_a;
     Time_t ts_b;
+    int64_t id;
     int32_t id_a;
     int32_t id_b;
     Pose_t relative_pose;
     Pose_t self_pose_a;
     Pose_t self_pose_b;
-    int64_t id;
     int32_t pnp_inlier_num;
+    Point3d_t pos_cov;
+    Point3d_t ang_cov;
+}
+
+struct DroneDetection6d_t {
+    Time_t ts;
+    int64_t id;
+    int32_t id_a;
+    int32_t id_b;
+    Pose_t relative_pose;
+    Pose_t self_pose_a;
     Point3d_t pos_cov;
     Point3d_t ang_cov;
 }
