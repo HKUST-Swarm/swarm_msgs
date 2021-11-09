@@ -187,13 +187,13 @@ inline swarm_msgs::LoopEdge toROSLoopEdge(const LoopEdge_t & loop_con) {
     
     loop_conn.pnp_inlier_num = loop_con.pnp_inlier_num;
 
-    loop_conn.pos_std.x = loop_con.pos_std.x;
-    loop_conn.pos_std.y = loop_con.pos_std.y;
-    loop_conn.pos_std.z = loop_con.pos_std.z;
+    loop_conn.pos_cov.x = loop_con.pos_cov.x;
+    loop_conn.pos_cov.y = loop_con.pos_cov.y;
+    loop_conn.pos_cov.z = loop_con.pos_cov.z;
 
-    loop_conn.ang_std.x = loop_con.ang_std.x;
-    loop_conn.ang_std.y = loop_con.ang_std.y;
-    loop_conn.ang_std.z = loop_con.ang_std.z;
+    loop_conn.ang_cov.x = loop_con.ang_cov.x;
+    loop_conn.ang_cov.y = loop_con.ang_cov.y;
+    loop_conn.ang_cov.z = loop_con.ang_cov.z;
     loop_conn.id = loop_con.id;
 
     return loop_conn;
@@ -213,13 +213,13 @@ inline LoopEdge_t toLCMLoopEdge(const swarm_msgs::LoopEdge & loop_con) {
     loop_conn.self_pose_a = fromROSPose(loop_con.self_pose_a);
     loop_conn.self_pose_b = fromROSPose(loop_con.self_pose_b);
 
-    loop_conn.pos_std.x = loop_con.pos_std.x;
-    loop_conn.pos_std.y = loop_con.pos_std.y;
-    loop_conn.pos_std.z = loop_con.pos_std.z;
+    loop_conn.pos_cov.x = loop_con.pos_cov.x;
+    loop_conn.pos_cov.y = loop_con.pos_cov.y;
+    loop_conn.pos_cov.z = loop_con.pos_cov.z;
 
-    loop_conn.ang_std.x = loop_con.ang_std.x;
-    loop_conn.ang_std.y = loop_con.ang_std.y;
-    loop_conn.ang_std.z = loop_con.ang_std.z;
+    loop_conn.ang_cov.x = loop_con.ang_cov.x;
+    loop_conn.ang_cov.y = loop_con.ang_cov.y;
+    loop_conn.ang_cov.z = loop_con.ang_cov.z;
     loop_conn.id = loop_con.id;
 
     return loop_conn;

@@ -6,7 +6,7 @@
 
 typedef struct __mavlink_drone_status_t {
  int32_t lps_time; /*< [ms] LPS_TIME*/
- float vo_latency; /*<  VO LATENCT*/
+ float vo_latency; /*<   VO Latency*/
  float bat_vol; /*<  BATTERY_VOL*/
  float bat_remain; /*< [s] BATTERY_REMAIN*/
  float x; /*< [m] X Position*/
@@ -95,7 +95,7 @@ typedef struct __mavlink_drone_status_t {
  * @param onboard_cmd_valid  ONBOARD CMD VALID
  * @param sdk_valid  SDK VALID
  * @param vo_valid   VO VALID
- * @param vo_latency  VO LATENCT
+ * @param vo_latency   VO Latency
  * @param bat_vol  BATTERY_VOL
  * @param bat_remain [s] BATTERY_REMAIN
  * @param x [m] X Position
@@ -168,7 +168,7 @@ static inline uint16_t mavlink_msg_drone_status_pack(uint8_t system_id, uint8_t 
  * @param onboard_cmd_valid  ONBOARD CMD VALID
  * @param sdk_valid  SDK VALID
  * @param vo_valid   VO VALID
- * @param vo_latency  VO LATENCT
+ * @param vo_latency   VO Latency
  * @param bat_vol  BATTERY_VOL
  * @param bat_remain [s] BATTERY_REMAIN
  * @param x [m] X Position
@@ -267,7 +267,7 @@ static inline uint16_t mavlink_msg_drone_status_encode_chan(uint8_t system_id, u
  * @param onboard_cmd_valid  ONBOARD CMD VALID
  * @param sdk_valid  SDK VALID
  * @param vo_valid   VO VALID
- * @param vo_latency  VO LATENCT
+ * @param vo_latency   VO Latency
  * @param bat_vol  BATTERY_VOL
  * @param bat_remain [s] BATTERY_REMAIN
  * @param x [m] X Position
@@ -338,7 +338,7 @@ static inline void mavlink_msg_drone_status_send_struct(mavlink_channel_t chan, 
 
 #if MAVLINK_MSG_ID_DRONE_STATUS_LEN <= MAVLINK_MAX_PAYLOAD_LEN
 /*
-  This varient of _send() can be used to save stack space by re-using
+  This variant of _send() can be used to save stack space by re-using
   memory from the receive buffer.  The caller provides a
   mavlink_message_t which is the size of a full mavlink message. This
   is usually the receive buffer for the channel, and allows a reply to an
@@ -488,7 +488,7 @@ static inline uint8_t mavlink_msg_drone_status_get_vo_valid(const mavlink_messag
 /**
  * @brief Get field vo_latency from drone_status message
  *
- * @return  VO LATENCT
+ * @return   VO Latency
  */
 static inline float mavlink_msg_drone_status_get_vo_latency(const mavlink_message_t* msg)
 {

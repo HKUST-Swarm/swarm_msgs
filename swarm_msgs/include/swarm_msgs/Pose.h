@@ -8,6 +8,11 @@
 
 using namespace Eigen;
 
+namespace Eigen {
+    typedef Matrix<double, 6, 6> Matrix6d;
+    typedef Matrix<double, 6, 1> Vector6d;
+};
+
 inline Vector3d quat2eulers(const Quaterniond &quat) {
     Vector3d rpy;
     rpy.x() = atan2(2 * (quat.w() * quat.x() + quat.y() * quat.z()),
@@ -16,6 +21,13 @@ inline Vector3d quat2eulers(const Quaterniond &quat) {
     rpy.z() = atan2(2 * (quat.w() * quat.z() + quat.x() * quat.y()),
                     1 - 2 * (quat.y() * quat.y() + quat.z() * quat.z()));
     return rpy;
+}
+
+//rpy2quat
+inline Quaterniond eulers2quat(const Vector3d eul) {
+    return Eigen::AngleAxisd(eul.z(), Eigen::Vector3d::UnitZ())
+        * Eigen::AngleAxisd(eul.y(), Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(eul.x(), Eigen::Vector3d::UnitX());
 }
 
 
@@ -333,14 +345,21 @@ public:
         attitude = attitude_yaw_only = (Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
-    std::string tostr() const {
+    std::string tostr(bool for_file=false) const {
         auto _rpy = rpy();
-        char _ret[100] = {0};
+        char _ret[128] = {0};
+        if (for_file) {
+            sprintf(_ret, "%3.4f %3.4f %3.4f %3.4f %3.4f %3.4f %3.4f",
+               position.x(), position.y(), position.z(),
+               attitude.w(), attitude.x(), attitude.y(), attitude.z());
+
+        } else {
         sprintf(_ret, "T [%+3.3f,%+3.3f,%+3.3f] YPR [%+3.1f,%+3.1f,%+3.1f]",
                position.x(), position.y(), position.z(),
                _rpy.z() * 57.3,
                _rpy.y() * 57.3,
                _rpy.x() * 57.3);
+        }
         return std::string(_ret);
     }
     void print() const {
@@ -381,15 +400,16 @@ public:
         attitude = attitude_yaw_only;
     }
 
-    Matrix<double, 6, 1> log_map() {
+    Vector6d log_map() {
+        //T Q
         //Modified from https://github.com/borglab/gtsam/blob/develop/gtsam/geometry/Pose3.cpp
         const Vector3d w = Logmap(att());
         const Vector3d T = pos();
         const double t = w.norm();
         if (t < 1e-10) {
-            Matrix<double, 6, 1> ret;
-            ret.block<3, 1>(0, 0) = w;
-            ret.block<3, 1>(3, 0) = T;
+            Vector6d ret;
+            ret.block<3, 1>(0, 0) = T;
+            ret.block<3, 1>(3, 0) = w;
             return ret;
         } else {
             const Matrix3d W = skewSymmetric(w / t);
@@ -398,9 +418,9 @@ public:
             const double Tan = tan(0.5 * t);
             const Vector3d WT = W * T;
             const Vector3d u = T - (0.5 * t) * WT + (1 - t / (2. * Tan)) * (W * WT);
-            Matrix<double, 6, 1> ret;
-            ret.block<3, 1>(0, 0) = w;
-            ret.block<3, 1>(3, 0) = u;
+            Vector6d ret;
+            ret.block<3, 1>(0, 0) = u;
+            ret.block<3, 1>(3, 0) = w;
             return ret;
         }
     }
@@ -422,5 +442,11 @@ inline std::ostream& operator<<(std::ostream& output, Pose & pose) {
 }
 // typedef std::pair<TsType, Pose> PoseStamped;
 // typedef std::vector<PoseStamped> Path;
+
+template <typename Vec, typename Mat>
+inline double computeSquaredMahalanobisDistance(Vec logmap, Mat cov_mat) {
+    auto ret = logmap.transpose() * cov_mat.inverse() * logmap;
+    return std::sqrt(ret(0, 0));
+}
 
 } // namespace Swarm

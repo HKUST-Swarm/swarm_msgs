@@ -10,13 +10,12 @@
 #include <set>
 #include <swarm_msgs/LoopEdge.h>
 #include <swarm_msgs/node_detected_xyzyaw.h>
+#include <swarm_msgs/node_detected.h>
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 
-// #define ERROR_NORMLIZED 0.01
-#define ERROR_NORMLIZED 1.0
 #define UNIDENTIFIED_MIN_ID 1000
 #define NO_ANNETAPOS
 #define ENABLE_DETECTION
@@ -35,6 +34,30 @@ inline int TSShort(TsType ts) {
 
 inline TsType TSLong(TsType ts) {
     return (ts/1000000)%10000000000;
+}
+
+template <typename T>
+long search_closest(const std::vector<T>& sorted_array, double x) {
+
+    auto iter_geq = std::lower_bound(
+        sorted_array.begin(), 
+        sorted_array.end(), 
+        x
+    );
+
+    if (iter_geq == sorted_array.begin()) {
+        return 0;
+    }
+
+    double a = *(iter_geq - 1);
+    double b = *(iter_geq);
+
+    if (fabs(x - a) < fabs(x - b)) {
+        return iter_geq - sorted_array.begin() - 1;
+    }
+
+    return iter_geq - sorted_array.begin();
+
 }
 
 
@@ -149,31 +172,53 @@ public:
     FrameIdType keyframe_id_b;
     ros::Time stamp_a;
     ros::Time stamp_b;
-    int id_a;
-    int id_b;
+    int id_a; // drone_id
+    int id_b; // drone_id
     Pose self_pose_a;
     Pose self_pose_b;
     int res_count = 0;
     enum { 
         Loop,
-        Detection
+        Detection3d,
+        Detection4d,
+        Detection6d
     } meaturement_type;
     GeneralMeasurement2DronesKey key() {
         return GeneralMeasurement2DronesKey(ts_a, ts_b, id_a, id_b);
     }
     
     FrameIdType id; //unique identifier for loop edge.
+
+    bool is_inter_loop() const { 
+        return id_a != id_b;
+    }
+
+    //Same direction, return 1 else 2
+    int same_robot_pair(GeneralMeasurement2Drones edge2) const {
+        if (is_inter_loop()) {
+            if (id_a == edge2.id_a && id_b == edge2.id_b) {
+                return 1;
+            }
+
+            if (id_a == edge2.id_b && id_b == edge2.id_a) {
+                return 2;
+            }
+        } else {
+            return 1;
+        }
+        return 0;
+    }
 };
 
 class LoopEdge: public GeneralMeasurement2Drones {
 public:
     int avg_count = 1;
     Pose relative_pose;
-    Eigen::Vector3d pos_std;
-    Eigen::Vector3d ang_std;
     bool has_information_matrix = false;
-    Eigen::Matrix<double, 6, 6> inf_mat;
-    Eigen::Matrix<double, 6, 6> sqrt_inf_mat;
+    Matrix6d inf_mat;
+    Matrix6d sqrt_inf_mat;
+    Matrix6d cov_mat;
+
     LoopEdge(swarm_msgs::LoopEdge loc, bool yaw_only = false) {
         id = loc.id;
         id_a = loc.id_a;
@@ -202,27 +247,72 @@ public:
         }
         meaturement_type = Loop;
 
-        pos_std = Eigen::Vector3d(loc.pos_std.x, loc.pos_std.y, loc.pos_std.z);
-        ang_std = Eigen::Vector3d(loc.ang_std.x, loc.ang_std.y, loc.ang_std.z);
+        Matrix6d cov = Matrix6d::Zero();
+        cov(0, 0) = loc.pos_cov.x;
+        cov(1, 1) = loc.pos_cov.y;
+        cov(2, 2) = loc.pos_cov.z;
+
+        cov(3, 3) = loc.ang_cov.x;
+        cov(4, 4) = loc.ang_cov.y;
+        cov(5, 5) = loc.ang_cov.z;
+        
+        set_covariance(cov);
     }
 
-    Eigen::Vector3d get_pos_cov() const {
-        return pos_std.array()*pos_std.array();
+    LoopEdge(const swarm_msgs::node_detected & loc)  {
+        id = loc.id;
+        id_a = loc.self_drone_id;
+        id_b = loc.remote_drone_id;
+        ts_a = loc.header.stamp.toNSec();
+        ts_b = loc.header.stamp.toNSec();
+
+        stamp_a = loc.header.stamp;
+        stamp_b = loc.header.stamp;
+
+        relative_pose = Pose(loc.relative_pose.pose);
+
+        self_pose_a = Pose(loc.local_pose_self);
+        self_pose_b = Pose(loc.local_pose_remote); //Maybe absent we create
+
+        if (loc.dof_4) {
+            relative_pose.set_yaw_only();
+            self_pose_a.set_yaw_only();
+            self_pose_b.set_yaw_only();
+            res_count = 4;
+            meaturement_type = Detection4d;
+        } else {
+            res_count = 6;
+            meaturement_type = Detection6d;
+        }
+
+        const Eigen::Map<const Eigen::Matrix<double,6,6,RowMajor>> cov(loc.relative_pose.covariance.data());
+        set_covariance(cov);
     }
 
-    Eigen::Vector3d get_ang_cov() const{
-        return ang_std.array()*ang_std.array();
+    //T, Q
+    Matrix6d get_covariance() const {
+        return cov_mat;
     }
 
-    Eigen::Matrix<double, 6, 1> get_cov_vec() const {
-        Eigen::Matrix<double, 6, 1> cov_vec;
-        cov_vec.setIdentity();
-        cov_vec.block<3, 1>(0, 0) = get_ang_cov();
-        cov_vec.block<3, 1>(3, 0) = get_pos_cov();
-        return cov_vec;
+    //T, Q
+    Matrix4d get_sqrt_information_4d() const {
+        Matrix4d _sqrt_inf = Matrix4d::Zero();
+        _sqrt_inf.block<3, 3>(0, 0) = sqrt_inf_mat.block<3, 3>(0, 0);
+        _sqrt_inf(3, 3) = sqrt_inf_mat(5, 5);
+        return _sqrt_inf;
     }
 
-    LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix<double, 6, 6> _inf_mat):
+    void set_covariance(const Matrix6d & cov) {
+        cov_mat = cov;
+        inf_mat = cov.inverse();
+        sqrt_inf_mat = inf_mat.cwiseAbs().cwiseSqrt();
+        // std::cout << "cov_mat" << cov_mat << std::endl;
+        // std::cout << "inf_mat" << inf_mat << std::endl;
+        // std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
+    }
+
+
+    LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix6d _inf_mat):
         inf_mat(_inf_mat)
     {
         id = loc.id;
@@ -266,11 +356,10 @@ public:
         self_pose_a = loc.self_pose_a;
         self_pose_b = loc.self_pose_b;
 
-        pos_std = loc.pos_std;
-        ang_std = loc.ang_std;
+        set_covariance(loc.cov_mat);
 
         meaturement_type = Loop;
-        res_count = 4;
+        res_count = loc.res_count;
     }
     
     LoopEdge() {
@@ -298,69 +387,25 @@ public:
         loop.meaturement_type = Loop;
         loop.res_count = 4;
 
-        loop.pos_std = pos_std;
-        loop.ang_std = ang_std;
+        loop.set_covariance(cov_mat);
         
         return loop;
     }
 
-    Eigen::Matrix<double, 6, 6> information_matrix() const {
-        if (has_information_matrix) {
-            return inf_mat;
-        } else {
-            Eigen::Matrix<double, 6, 6> _inf_mat;
-            Eigen::Vector3d pos_sqrt_inv(1/pos_std.x(), 1/pos_std.y(), 1/pos_std.z());
-            Eigen::Matrix<double, 3, 3> pos_sqrt_inf_mat = pos_sqrt_inv.asDiagonal();
-            
-            Eigen::Vector3d ang_sqrt_inv(1/ang_std.x(), 1/ang_std.y(), 1/ang_std.z());
-            Eigen::Matrix<double, 3, 3> ang_sqrt_inf_mat = ang_sqrt_inv.asDiagonal();
-            
-            _inf_mat.block<3, 3>(0, 0) = pos_sqrt_inf_mat*pos_sqrt_inf_mat;
-            _inf_mat.block<3, 3>(3, 3) = ang_sqrt_inf_mat*ang_sqrt_inf_mat;
-            return _inf_mat;
-        }
+    Eigen::Matrix6d information_matrix() const {
+        return inf_mat;
     }
 
-    Eigen::Matrix<double, 6, 6> sqrt_information_matrix() const {
-        if (has_information_matrix) {
-            return sqrt_inf_mat;
-        } else {
-            Eigen::Matrix<double, 6, 6> _sqrt_inf_mat;
-            Eigen::Vector3d pos_sqrt_inv(1/pos_std.x(), 1/pos_std.y(), 1/pos_std.z());
-            Eigen::Matrix<double, 3, 3> pos_sqrt_inf_mat = pos_sqrt_inv.asDiagonal();
-            
-            Eigen::Vector3d ang_sqrt_inv(1/ang_std.x(), 1/ang_std.y(), 1/ang_std.z());
-            Eigen::Matrix<double, 3, 3> ang_sqrt_inf_mat = ang_sqrt_inv.asDiagonal();
-            
-            _sqrt_inf_mat.block<3, 3>(0, 0) = pos_sqrt_inf_mat;
-            _sqrt_inf_mat.block<3, 3>(3, 3) = ang_sqrt_inf_mat;
-            return _sqrt_inf_mat;
-        }
+    Eigen::Matrix6d sqrt_information_matrix() const {
+        return sqrt_inf_mat;
     }
-
-    bool is_inter_loop() const { 
-        return id_a != id_b;
-    }
-
-    //Same direction, return 1 else 2
-    int same_robot_pair(LoopEdge edge2) const {
-        if (is_inter_loop()) {
-            if (id_a == edge2.id_a && id_b == edge2.id_b) {
-                return 1;
-            }
-
-            if (id_a == edge2.id_b && id_b == edge2.id_a) {
-                return 2;
-            }
-        }
-        return 0;
-    }
+    
 };
 
 class DroneDetection: public GeneralMeasurement2Drones {
 
 public:
-    Eigen::Matrix<double, 2, 3> detect_tan_base;
+    Eigen::Matrix<double, 2, 3, RowMajor> detect_tan_base;
     Eigen::Vector3d p = Eigen::Vector3d::Zero();
     double inv_dep = 0;
     double probaility = 0;
@@ -374,12 +419,13 @@ public:
     Pose dpose_self_a;
     Pose dpose_self_b;
 
-    Eigen::Vector3d extrinsic;
-    Eigen::Vector3d centr_of_detection_position;
+    Pose extrinsic; //Extrinsic from IMU to Cam
+    Pose GC = Swarm::Pose(Vector3d(-0.06, 0, 0), Quaterniond::Identity()); //Extrinsic from IMU to GC(e.g. detection center.)
 
-    DroneDetection(const swarm_msgs::node_detected_xyzyaw & nd, bool _enable_dpose, Eigen::Vector3d CG, bool _enable_depth = true):
-        enable_dpose(_enable_dpose), centr_of_detection_position(0, 0, 0.02)
+    DroneDetection(const swarm_msgs::node_detected_xyzyaw & nd, bool _enable_dpose, Eigen::Vector3d _CG, bool _enable_depth = true):
+        enable_dpose(_enable_dpose)
     {
+        id = nd.id;
         id_a = nd.self_drone_id;
         id_b = nd.remote_drone_id;
         ts_a = nd.header.stamp.toNSec();
@@ -390,14 +436,15 @@ public:
 
         probaility = nd.probaility;
         
-        extrinsic = Pose(nd.camera_extrinsic).pos();
+        extrinsic = Pose(nd.camera_extrinsic);
         self_pose_a = Pose(nd.local_pose_self);
-        self_pose_b = Pose(nd.local_pose_remote)*Pose(-CG, Eigen::Quaterniond::Identity());
+        self_pose_b = Pose(nd.local_pose_remote)*Pose(-_CG, Eigen::Quaterniond::Identity());
+        Pose GC = Swarm::Pose(_CG, Quaterniond::Identity()); //Extrinsic from IMU to GC(e.g. detection center.)
         inv_dep = nd.inv_dep;
         //Here hacked
         p = Eigen::Vector3d(nd.dpos.x, nd.dpos.y, nd.dpos.z);
         p.normalize();
-        meaturement_type = Detection;
+        meaturement_type = Detection3d;
 
         if (_enable_depth && nd.enable_scale) {
             enable_depth = true;
@@ -412,34 +459,8 @@ public:
     }
 
 
-    DroneDetection(const DroneDetection & dronedet):
-        extrinsic(0, 0.0, 0.1), centr_of_detection_position(0, 0, 0.02) {
-        id_a = dronedet.id_a;
-        id_b = dronedet.id_b;
-        ts_a = dronedet.ts_a;
-        ts_b = dronedet.ts_b;
-
-        stamp_a = dronedet.stamp_a;
-        stamp_b = dronedet.stamp_b;
-
-        probaility = dronedet.probaility;
-
-        self_pose_a = dronedet.self_pose_a;
-        self_pose_b = dronedet.self_pose_b;
-
-        inv_dep = dronedet.inv_dep;
-        p = dronedet.p;
-        p.normalize();
-        meaturement_type = Detection;
-
-        enable_depth = dronedet.enable_depth;
-        res_count = dronedet.res_count;
-
-        detect_tan_base = dronedet.detect_tan_base;
-    }
-
     DroneDetection() {
-        meaturement_type = Detection;
+        meaturement_type = Detection3d;
         res_count = 0;
     }
 };
@@ -460,8 +481,6 @@ public:
     Pose estimated_pose;
 
     Eigen::Vector3d self_vel = Eigen::Vector3d(0, 0, 0);
-    Eigen::Vector3d position_std_to_last;
-    double yaw_std_to_last;
     std::map<int, bool> enabled_detection;
     std::map<int, bool> enabled_distance;
     std::map<int, bool> outlier_distance;
@@ -476,7 +495,7 @@ public:
     bool is_valid = false;
 
     NodeFrame(Node *_node) :
-            node(_node), position_std_to_last(0.01, 0.01, 0.01), yaw_std_to_last(0.01) {
+            node(_node) {
         is_static = _node->is_static_node();
     }
 
@@ -603,7 +622,6 @@ class DroneTrajectory {
 
     std::vector<Swarm::NodeFrame> trajectory_frames;
     std::vector<Swarm::Pose> trajectory;
-    std::vector<uint64_t> id_trajectory;
     std::vector<double> cul_length;
     std::vector<TsType> ts_trajectory;
     std::vector<ros::Time> stamp_trajectory;
@@ -614,9 +632,12 @@ class DroneTrajectory {
     int traj_points = 0;
     nav_msgs::Path ros_path;
     std::string frame_id = "world";
+
+    double pos_covariance_per_meter = 4e-3;
+    double yaw_covariance_per_meter = 4e-5;
 public:
-    DroneTrajectory(int _drone_id, bool is_ego_motion, std::string _frame_id="world"):
-        drone_id(_drone_id), is_traj_ego_motion(is_ego_motion), frame_id(_frame_id)
+    DroneTrajectory(int _drone_id, bool is_ego_motion, double _pos_covariance_per_meter=4e-3, double _yaw_covariance_per_meter = 4e-5, std::string _frame_id="world"):
+        drone_id(_drone_id), is_traj_ego_motion(is_ego_motion), frame_id(_frame_id),pos_covariance_per_meter(_pos_covariance_per_meter), yaw_covariance_per_meter(_yaw_covariance_per_meter)
     {
         ros_path.header.frame_id = frame_id;
     }
@@ -644,7 +665,33 @@ public:
     }
 
     Swarm::NodeFrame get_node_frame(int index) const {
+        assert(index < trajectory_frames.size() && "index out of range");
         return trajectory_frames.at(index);
+    }
+
+    void push(ros::Time stamp, const Swarm::Pose & pose) {
+        if (cul_length.size() == 0) {
+            cul_length.push_back(0);
+        } else {
+            Swarm::Pose last = trajectory.back();
+            auto dpose = Swarm::Pose::DeltaPose(last, pose);
+            cul_length.push_back(dpose.pos().norm()+cul_length.back());
+        }
+
+        auto ts = stamp.toNSec();
+        trajectory.push_back(pose);
+        ts_trajectory.push_back(ts);
+        stamp_trajectory.push_back(stamp);
+        ts2index[ts] = ts_trajectory.size() - 1;
+
+        geometry_msgs::PoseStamped _pose_stamped;
+        _pose_stamped.header.stamp = stamp;
+        _pose_stamped.header.frame_id = frame_id;
+        ros_path.header.stamp = _pose_stamped.header.stamp;
+        _pose_stamped.pose = pose.to_ros_pose();
+        ros_path.poses.push_back(_pose_stamped);
+
+        traj_points++;
     }
 
     void push(const Swarm::NodeFrame & nf, const Swarm::Pose & pose) {
@@ -658,7 +705,6 @@ public:
 
         trajectory_frames.push_back(nf);
         trajectory.push_back(pose);
-        id_trajectory.push_back(nf.id);
         ts_trajectory.push_back(nf.ts);
         stamp_trajectory.push_back(nf.stamp);
         ts2index[nf.ts] = trajectory_frames.size() - 1;
@@ -683,23 +729,61 @@ public:
         return cul_length.back();
     }
 
-    Swarm::Pose get_relative_pose_by_ts(TsType tsa, TsType tsb) const {
+    std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_ts(TsType tsa, TsType tsb, bool pose_4d=false) const {
         if (ts2index.find(tsa) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
             exit(-1);
-            return Swarm::Pose();
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
         }
 
         if (ts2index.find(tsb) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
             exit(-1);
-            return Swarm::Pose();
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
         }
+
 
         auto indexa = ts2index.at(tsa);
         auto indexb = ts2index.at(tsb);
 
-        return Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb));
+        auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb), pose_4d);
+        // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.tostr().c_str());
+        return std::make_pair(rp, covariance_between_ts(tsa, tsb));
+    }
+
+    Swarm::Pose pose_by_appro_ts(TsType tsa, double & dt) const {
+        if (ts2index.find(tsa) != ts2index.end()) {
+            dt = 0;
+            return trajectory.at(ts2index.at(tsa));
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        dt = (ts_trajectory[indexa] - tsa)/1e9;
+        return trajectory.at(indexa);
+    }
+
+    Swarm::Pose pose_by_appro_ts(TsType tsa) const {
+        if (ts2index.find(tsa) != ts2index.end()) {
+            return trajectory.at(ts2index.at(tsa));
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        return trajectory.at(indexa);
+    }
+
+
+    double trajectory_length_by_appro_ts(TsType tsa, TsType tsb) const {
+        if (ts2index.find(tsa) != ts2index.end() && ts2index.find(tsb) != ts2index.end()) {
+            return trajectory_length_by_ts(tsa, tsb);
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        auto indexb = search_closest(ts_trajectory, tsb);
+
+        // ROS_INFO("Appro ts(ms) %d<->%d find %d<->%d", tsa/1000000, tsb/1000000, 
+        //     ts_trajectory[indexa]/1000000, 
+        //     ts_trajectory[indexb]/1000000);
+        return fabs(cul_length[indexb] - cul_length[indexa]);
     }
 
     double trajectory_length_by_ts(TsType tsa, TsType tsb) const {
@@ -739,13 +823,21 @@ public:
     }
 
     //Ang Pos
-    Eigen::Matrix<double, 6, 1> covariance_between_ts(TsType tsa, TsType tsb, double cov_ang_pre_meter, double cov_pos_pre_meter) {
+    Eigen::Matrix6d covariance_between_ts(TsType tsa, TsType tsb) const {
         double len = trajectory_length_by_ts(tsa, tsb);
-        Eigen::Matrix<double, 6, 1> cov_vec;
-        cov_vec.setIdentity();
-        cov_vec.block<3, 1>(0, 0) = cov_vec.block<3, 1>(0, 0)*cov_ang_pre_meter;
-        cov_vec.block<3, 1>(3, 0) = cov_vec.block<3, 1>(3, 0)*cov_pos_pre_meter;
-        return cov_vec;
+        Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
+        // std::cout << "length " << len << "Cov\n" << cov_mat << std::endl;
+        return cov_mat;
+    }
+
+    Eigen::Matrix6d covariance_between_appro_ts(TsType tsa, TsType tsb) const {
+        double len = trajectory_length_by_appro_ts(tsa, tsb);
+        Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
+        return cov_mat;
     }
 
     const nav_msgs::Path & get_ros_path() const {
@@ -839,3 +931,30 @@ class SwarmFrame {
 
     };
 };
+
+#include <chrono> 
+
+class TicToc
+{
+  public:
+    TicToc()
+    {
+        tic();
+    }
+
+    void tic()
+    {
+        start = std::chrono::system_clock::now();
+    }
+
+    double toc()
+    {
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        return elapsed_seconds.count() * 1000;
+    }
+
+  private:
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+};
+

@@ -9,8 +9,8 @@ geometry_msgs/Pose relative_pose
 geometry_msgs/Pose self_pose_a
 geometry_msgs/Pose self_pose_b
 
-geometry_msgs/Point pos_std
-geometry_msgs/Point ang_std
+geometry_msgs/Point pos_cov
+geometry_msgs/Point ang_cov
 
 #Details for loop
 int32 pnp_inlier_num
