@@ -8,3 +8,4 @@ bool is_yaw_valid
 float64 probaility
 geometry_msgs/Pose local_pose_self
 geometry_msgs/Pose local_pose_remote
+bool dof_4

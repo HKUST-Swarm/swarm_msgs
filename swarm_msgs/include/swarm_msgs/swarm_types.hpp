@@ -179,7 +179,9 @@ public:
     int res_count = 0;
     enum { 
         Loop,
-        Detection
+        Detection3d,
+        Detection4d,
+        Detection6d
     } meaturement_type;
     GeneralMeasurement2DronesKey key() {
         return GeneralMeasurement2DronesKey(ts_a, ts_b, id_a, id_b);
@@ -257,7 +259,7 @@ public:
         set_covariance(cov);
     }
 
-    LoopEdge(const swarm_msgs::node_detected & loc, bool yaw_only=false)  {
+    LoopEdge(const swarm_msgs::node_detected & loc)  {
         id = loc.id;
         id_a = loc.self_drone_id;
         id_b = loc.remote_drone_id;
@@ -272,15 +274,16 @@ public:
         self_pose_a = Pose(loc.local_pose_self);
         self_pose_b = Pose(loc.local_pose_remote); //Maybe absent we create
 
-        if (yaw_only) {
+        if (loc.dof_4) {
             relative_pose.set_yaw_only();
             self_pose_a.set_yaw_only();
             self_pose_b.set_yaw_only();
             res_count = 4;
+            meaturement_type = Detection4d;
         } else {
             res_count = 6;
+            meaturement_type = Detection6d;
         }
-        meaturement_type = Loop;
 
         const Eigen::Map<const Eigen::Matrix<double,6,6,RowMajor>> cov(loc.relative_pose.covariance.data());
         set_covariance(cov);
@@ -441,7 +444,7 @@ public:
         //Here hacked
         p = Eigen::Vector3d(nd.dpos.x, nd.dpos.y, nd.dpos.z);
         p.normalize();
-        meaturement_type = Detection;
+        meaturement_type = Detection3d;
 
         if (_enable_depth && nd.enable_scale) {
             enable_depth = true;
@@ -457,7 +460,7 @@ public:
 
 
     DroneDetection() {
-        meaturement_type = Detection;
+        meaturement_type = Detection3d;
         res_count = 0;
     }
 };
