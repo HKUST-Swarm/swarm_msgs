@@ -25,8 +25,8 @@
 typedef std::vector<Vector3d> vec_array;
 typedef std::vector<Quaterniond> quat_array;
 typedef std::map<int, double> DisMap;
-typedef uint64_t TsType;
-typedef uint64_t FrameIdType;
+typedef int64_t TsType;
+typedef int64_t FrameIdType;
 
 inline int TSShort(TsType ts) {
     return (ts/1000000)%10000000;
@@ -758,7 +758,12 @@ public:
         }
 
         auto indexa = search_closest(ts_trajectory, tsa);
-        dt = (ts_trajectory[indexa] - tsa)/1e9;
+        // ROS_INFO("search_closest index %d/%d %ld tsa %ld dt %ld %f", indexa, ts_trajectory.size(), ts_trajectory[indexa], tsa, ts_trajectory.at(indexa) - tsa, (ts_trajectory.at(indexa) - tsa)/1e9);
+        if (indexa < 0 || indexa >= ts_trajectory.size()) {
+            dt = 1000000;
+            return Swarm::Pose();
+        }
+        dt = (ts_trajectory.at(indexa) - tsa)/1e9;
         return trajectory.at(indexa);
     }
 
