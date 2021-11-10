@@ -289,6 +289,24 @@ public:
         set_covariance(cov);
     }
 
+    swarm_msgs::LoopEdge toros() const {
+        swarm_msgs::LoopEdge loc;
+        loc.id = id;
+        loc.id_a = id_a;
+        loc.id_b = id_b;
+        loc.ts_a = stamp_a;
+        loc.ts_b = stamp_b;
+
+        loc.keyframe_id_a = keyframe_id_a;
+        loc.keyframe_id_b = keyframe_id_b;
+
+        loc.relative_pose = relative_pose.to_ros_pose();
+
+        loc.self_pose_a = self_pose_a.to_ros_pose();
+        loc.self_pose_b = self_pose_b.to_ros_pose();
+        return loc;
+    }
+
     //T, Q
     Matrix6d get_covariance() const {
         return cov_mat;

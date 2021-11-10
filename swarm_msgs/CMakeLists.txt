@@ -32,6 +32,7 @@ add_message_files(
         swarm_drone_basecoor.msg
         ImageDescriptor.msg
         LoopEdge.msg
+        LoopEdges.msg
         FisheyeFrameDescriptor.msg
 )
 
