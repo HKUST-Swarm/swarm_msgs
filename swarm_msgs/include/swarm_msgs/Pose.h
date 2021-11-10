@@ -362,6 +362,7 @@ public:
         }
         return std::string(_ret);
     }
+
     void print() const {
         std::cout << tostr();
     }

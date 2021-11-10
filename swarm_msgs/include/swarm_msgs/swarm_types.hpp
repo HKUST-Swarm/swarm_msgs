@@ -358,7 +358,7 @@ public:
 
         set_covariance(loc.cov_mat);
 
-        meaturement_type = Loop;
+        meaturement_type = loc.meaturement_type;
         res_count = loc.res_count;
     }
     
