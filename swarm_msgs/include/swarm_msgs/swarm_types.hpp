@@ -182,7 +182,7 @@ public:
         Detection3d,
         Detection4d,
         Detection6d
-    } meaturement_type;
+    } measurement_type;
     GeneralMeasurement2DronesKey key() {
         return GeneralMeasurement2DronesKey(ts_a, ts_b, id_a, id_b);
     }
@@ -245,7 +245,7 @@ public:
         } else {
             res_count = 6;
         }
-        meaturement_type = Loop;
+        measurement_type = Loop;
 
         Matrix6d cov = Matrix6d::Zero();
         cov(0, 0) = loc.pos_cov.x;
@@ -279,10 +279,10 @@ public:
             self_pose_a.set_yaw_only();
             self_pose_b.set_yaw_only();
             res_count = 4;
-            meaturement_type = Detection4d;
+            measurement_type = Detection4d;
         } else {
             res_count = 6;
-            meaturement_type = Detection6d;
+            measurement_type = Detection6d;
         }
 
         const Eigen::Map<const Eigen::Matrix<double,6,6,RowMajor>> cov(loc.relative_pose.covariance.data());
@@ -348,7 +348,7 @@ public:
         relative_pose = loc.relative_pose;
         self_pose_a = Pose(loc.self_pose_a);
         self_pose_b = Pose(loc.self_pose_b);
-        meaturement_type = Loop;
+        measurement_type = Loop;
         res_count = 6;
         has_information_matrix = true;
 
@@ -376,12 +376,12 @@ public:
 
         set_covariance(loc.cov_mat);
 
-        meaturement_type = loc.meaturement_type;
+        measurement_type = loc.measurement_type;
         res_count = loc.res_count;
     }
     
     LoopEdge() {
-        meaturement_type = Loop;
+        measurement_type = Loop;
         res_count = 0;
     }
 
@@ -402,7 +402,7 @@ public:
 
         loop.self_pose_a = self_pose_b;
         loop.self_pose_b = self_pose_a;
-        loop.meaturement_type = Loop;
+        loop.measurement_type = Loop;
         loop.res_count = 4;
 
         loop.set_covariance(cov_mat);
@@ -462,7 +462,7 @@ public:
         //Here hacked
         p = Eigen::Vector3d(nd.dpos.x, nd.dpos.y, nd.dpos.z);
         p.normalize();
-        meaturement_type = Detection3d;
+        measurement_type = Detection3d;
 
         if (_enable_depth && nd.enable_scale) {
             enable_depth = true;
@@ -478,7 +478,7 @@ public:
 
 
     DroneDetection() {
-        meaturement_type = Detection3d;
+        measurement_type = Detection3d;
         res_count = 0;
     }
 };
@@ -657,6 +657,8 @@ public:
     DroneTrajectory(int _drone_id, bool is_ego_motion, double _pos_covariance_per_meter=4e-3, double _yaw_covariance_per_meter = 4e-5, std::string _frame_id="world"):
         drone_id(_drone_id), is_traj_ego_motion(is_ego_motion), frame_id(_frame_id),pos_covariance_per_meter(_pos_covariance_per_meter), yaw_covariance_per_meter(_yaw_covariance_per_meter)
     {
+        // ROS_INFO("Initialize trajectory %d for ego %d with pos_covariance_per_meter %.2e yaw_covariance_per_meter %.2e",
+            // _drone_id, is_ego_motion, pos_covariance_per_meter, yaw_covariance_per_meter);
         ros_path.header.frame_id = frame_id;
     }
 
@@ -776,7 +778,7 @@ public:
         }
 
         auto indexa = search_closest(ts_trajectory, tsa);
-        // ROS_INFO("search_closest index %d/%d %ld tsa %ld dt %ld %f", indexa, ts_trajectory.size(), ts_trajectory[indexa], tsa, ts_trajectory.at(indexa) - tsa, (ts_trajectory.at(indexa) - tsa)/1e9);
+        // ROS_INFO("search_closest index %ld/%ld %ld tsa %ld dt %ld %f", indexa, ts_trajectory.size(), ts_trajectory[indexa], tsa, ts_trajectory.at(indexa) - tsa, (ts_trajectory.at(indexa) - tsa)/1e9);
         if (indexa < 0 || indexa >= ts_trajectory.size()) {
             dt = 1000000;
             return Swarm::Pose();
@@ -793,7 +795,6 @@ public:
         auto indexa = search_closest(ts_trajectory, tsa);
         return trajectory.at(indexa);
     }
-
 
     double trajectory_length_by_appro_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) != ts2index.end() && ts2index.find(tsb) != ts2index.end()) {
