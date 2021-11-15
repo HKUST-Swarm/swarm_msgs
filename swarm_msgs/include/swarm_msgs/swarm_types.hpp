@@ -482,7 +482,6 @@ public:
         res_count = 0;
     }
 };
-typedef std::vector<std::pair<int64_t, Pose>> DroneTraj;
 class NodeFrame {
 public:
     bool frame_available = false;
@@ -794,6 +793,11 @@ public:
 
         auto indexa = search_closest(ts_trajectory, tsa);
         return trajectory.at(indexa);
+    }
+
+
+    Swarm::Pose pose_by_index(int _index) const {
+        return trajectory.at(_index);
     }
 
     double trajectory_length_by_appro_ts(TsType tsa, TsType tsb) const {
