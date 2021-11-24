@@ -332,6 +332,16 @@ public:
         return p;
     }
 
+    static double MahalanobisDistance(const Pose &a, const Pose &b, Eigen::Matrix6d cov) {
+        return DeltaPose(a, b).MahalanobisNorm(cov);
+    }
+
+    double MahalanobisNorm(Eigen::Matrix6d cov_mat) const {
+        auto _logmap = this->log_map();
+        auto ret = _logmap.transpose() * cov_mat.inverse() * _logmap;
+        return std::sqrt(ret(0, 0));
+    }
+
     inline double & yaw() {
         return _yaw;
     }
@@ -401,7 +411,7 @@ public:
         attitude = attitude_yaw_only;
     }
 
-    Vector6d log_map() {
+    Vector6d log_map() const {
         //T Q
         //Modified from https://github.com/borglab/gtsam/blob/develop/gtsam/geometry/Pose3.cpp
         const Vector3d w = Logmap(att());

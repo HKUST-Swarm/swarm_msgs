@@ -750,14 +750,14 @@ public:
 
     std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_ts(TsType tsa, TsType tsb, bool pose_4d=false) const {
         if (ts2index.find(tsa) == ts2index.end()) {
-            ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
-            exit(-1);
+            ROS_ERROR("get_relative_pose_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
+            assert(false && "tsa not found. Use get_relative_pose_by_appro_ts instead");
             return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
         }
 
         if (ts2index.find(tsb) == ts2index.end()) {
-            ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
-            exit(-1);
+            ROS_ERROR("get_relative_pose_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
+            assert(false && "tsb not found. Use get_relative_pose_by_appro_ts instead");
             return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
         }
 
@@ -768,6 +768,13 @@ public:
         auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb), pose_4d);
         // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.tostr().c_str());
         return std::make_pair(rp, covariance_between_ts(tsa, tsb));
+    }
+    
+    std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_appro_ts(TsType tsa, TsType tsb, bool pose_4d=false) const {
+        auto posea = pose_by_appro_ts(tsa);
+        auto poseb = pose_by_appro_ts(tsb);
+        auto rp = Swarm::Pose::DeltaPose(posea, poseb, pose_4d);
+        return std::make_pair(rp, covariance_between_appro_ts(tsa, tsb));
     }
 
     Swarm::Pose pose_by_appro_ts(TsType tsa, double & dt) const {
@@ -795,10 +802,24 @@ public:
         return trajectory.at(indexa);
     }
 
+    Swarm::Pose pose_by_appro_ts(TsType tsa, TsType & tsb) const {
+        if (ts2index.find(tsa) != ts2index.end()) {
+            return trajectory.at(ts2index.at(tsa));
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        tsb = ts_trajectory.at(indexa);
+        return trajectory.at(indexa);
+    }
 
     Swarm::Pose pose_by_index(int _index) const {
         return trajectory.at(_index);
     }
+
+    TsType ts_by_index(int _index) const {
+        return ts_trajectory.at(_index);
+    }
+
 
     double trajectory_length_by_appro_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) != ts2index.end() && ts2index.find(tsb) != ts2index.end()) {
@@ -817,12 +838,13 @@ public:
     double trajectory_length_by_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsa not found", tsa, tsb);
-            exit(-1);
+            assert(false && "tsa not found. Use trajectory_length_by_appro_ts instead");
             return -1;
         }
 
         if (ts2index.find(tsb) == ts2index.end()) {
             ROS_ERROR("trajectory_length_by_ts %ld-%ld failed. tsb not found", tsa, tsb);
+            assert(false && "tsb not found. Use trajectory_length_by_appro_ts instead");
             exit(-1);
             return -1;
         }
@@ -835,12 +857,12 @@ public:
 
     double trajectory_length_by_id(FrameIdType ida, FrameIdType idb) const {
         if (id2index.find(ida) == id2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsa not found", ida, idb);
+            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. ida not found", ida, idb);
             return -1;
         }
 
         if (id2index.find(idb) == id2index.end()) {
-            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. tsb not found", ida, idb);
+            ROS_WARN("trajectory_length_by_ts %ld-%ld failed. idb not found", ida, idb);
             return -1;
         }
 
