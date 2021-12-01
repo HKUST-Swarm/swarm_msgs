@@ -402,11 +402,14 @@ public:
 
         loop.self_pose_a = self_pose_b;
         loop.self_pose_b = self_pose_a;
-        loop.measurement_type = Loop;
-        loop.res_count = 4;
+        loop.measurement_type = measurement_type;
+        loop.res_count = res_count;
 
         loop.set_covariance(cov_mat);
-        
+
+        loop.ts_a = ts_b;
+        loop.ts_b = ts_a;
+
         return loop;
     }
 
@@ -800,6 +803,15 @@ public:
 
         auto indexa = search_closest(ts_trajectory, tsa);
         return trajectory.at(indexa);
+    }
+
+    std::pair<TsType, Swarm::Pose> tspose_by_appro_ts(TsType tsa) const {
+        if (ts2index.find(tsa) != ts2index.end()) {
+            return std::make_pair(tsa, trajectory.at(ts2index.at(tsa)));
+        }
+
+        auto indexa = search_closest(ts_trajectory, tsa);
+        return std::make_pair(ts_trajectory.at(indexa), trajectory.at(indexa));
     }
 
     Swarm::Pose pose_by_appro_ts(TsType tsa, TsType & tsb) const {
