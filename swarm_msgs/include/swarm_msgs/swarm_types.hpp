@@ -112,7 +112,9 @@ class Node {
         }
 
         double to_real_distance(const double mea, int _id) const {
-            assert(coeffs.find(_id) != coeffs.end() && "NO SUCH ID ON IN DISTANCE PARAMS");
+            if (coeffs.find(_id) == coeffs.end() ) {
+                return mea;
+            }
             auto _coeffs = coeffs.at(_id);
             return _coeffs[0] + _coeffs[1] * mea;
         }
@@ -130,17 +132,19 @@ class Node {
                 _has_vo = config["has_vo"].as<bool>();
                 _has_global_pose = config["has_global_pose"].as<bool>();
                 _is_static = config["is_static"].as<bool>();
-                if (_has_uwb) {
+                if (_has_uwb && config["anntena_pos"]) {
                     this->anntena_pos = Vector3d( config["anntena_pos"][0].as<double>(),
                             config["anntena_pos"][1].as<double>(),
                             config["anntena_pos"][2].as<double>());
                 }
 
-                const YAML::Node & bias_node = config["bias"];
-                for(auto it=bias_node.begin();it!=bias_node.end();++it) {
-                    int _node_id = it->first.as<int>();
-                    std::vector<double> _coeffs = it->second.as<std::vector<double>>();
-                    this->coeffs[_node_id] = _coeffs;
+                if (config["bias"]) {
+                    const YAML::Node & bias_node = config["bias"];
+                    for(auto it=bias_node.begin();it!=bias_node.end();++it) {
+                        int _node_id = it->first.as<int>();
+                        std::vector<double> _coeffs = it->second.as<std::vector<double>>();
+                        this->coeffs[_node_id] = _coeffs;
+                    }
                 }
             }
             catch (YAML::ParserException & e){
@@ -686,6 +690,10 @@ public:
         return trajectory.at(index);
     }
 
+    Swarm::Pose get_latest_pose() const {
+        return trajectory.back();
+    }
+
     Swarm::NodeFrame get_node_frame(int index) const {
         assert(index < trajectory_frames.size() && "index out of range");
         return trajectory_frames.at(index);
@@ -888,7 +896,8 @@ public:
     Eigen::Matrix6d covariance_between_ts(TsType tsa, TsType tsb) const {
         double len = trajectory_length_by_ts(tsa, tsb);
         Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
-        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len 
+            + 0.5*Matrix3d::Identity()*yaw_covariance_per_meter*len*len;;
         cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
         // std::cout << "length " << len << "Cov\n" << cov_mat << std::endl;
         return cov_mat;
@@ -897,7 +906,8 @@ public:
     Eigen::Matrix6d covariance_between_appro_ts(TsType tsa, TsType tsb) const {
         double len = trajectory_length_by_appro_ts(tsa, tsb);
         Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
-        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len;
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len 
+            + 0.5*Matrix3d::Identity()*yaw_covariance_per_meter*len*len;
         cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
         return cov_mat;
     }
