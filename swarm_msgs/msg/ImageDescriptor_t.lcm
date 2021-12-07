@@ -121,3 +121,15 @@ struct DroneDetection6d_t {
     Point3d_t pos_cov;
     Point3d_t ang_cov;
 }
+
+struct LoopInliers_t {
+    Time_t ts;
+
+    int32_t sender_id;
+
+    int32_t drone_id_a;
+    int32_t drone_id_b;
+    
+    int32_t inlier_id_size;
+    int64_t inlier_ids[inlier_id_size];
+}
