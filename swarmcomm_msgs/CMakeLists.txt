@@ -22,6 +22,8 @@ add_message_files(
     remote_uwb_info.msg
     incoming_broadcast_data.msg
     data_buffer.msg
+    drone_network_status.msg
+    swarm_network_status.msg
 )
 
 
