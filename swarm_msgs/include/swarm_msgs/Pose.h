@@ -8,8 +8,13 @@
 
 using namespace Eigen;
 
-inline Eigen::Vector3d quat2eulers(const Eigen::Quaterniond &quat) {
-    Eigen::Vector3d rpy;
+namespace Eigen {
+    typedef Matrix<double, 6, 6> Matrix6d;
+    typedef Matrix<double, 6, 1> Vector6d;
+};
+
+inline Vector3d quat2eulers(const Quaterniond &quat) {
+    Vector3d rpy;
     rpy.x() = atan2(2 * (quat.w() * quat.x() + quat.y() * quat.z()),
                     1 - 2 * (quat.x() * quat.x() + quat.y() * quat.y()));
     rpy.y() = asin(2 * (quat.w() * quat.y() - quat.z() * quat.x()));
@@ -17,6 +22,54 @@ inline Eigen::Vector3d quat2eulers(const Eigen::Quaterniond &quat) {
                     1 - 2 * (quat.y() * quat.y() + quat.z() * quat.z()));
     return rpy;
 }
+
+//rpy2quat
+inline Quaterniond eulers2quat(const Vector3d eul) {
+    return Eigen::AngleAxisd(eul.z(), Eigen::Vector3d::UnitZ())
+        * Eigen::AngleAxisd(eul.y(), Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(eul.x(), Eigen::Vector3d::UnitX());
+}
+
+
+inline Matrix3d skewSymmetric(Vector3d w) {
+  Matrix3d ret;
+  ret << 0.0, -w.z(), +w.y(), +w.z(), 0.0, -w.x(), -w.y(), +w.x(), 0.0;
+  return ret;
+}
+
+
+inline Vector3d Logmap(const Quaterniond& q) {
+    using std::acos;
+    using std::sqrt;
+
+    // define these compile time constants to avoid std::abs:
+    static const double twoPi = 2.0 * M_PI, NearlyOne = 1.0 - 1e-10,
+    NearlyNegativeOne = -1.0 + 1e-10;
+
+    Vector3d omega;
+
+    const double qw = q.w();
+    // See Quaternion-Logmap.nb in doc for Taylor expansions
+    if (qw > NearlyOne) {
+      // Taylor expansion of (angle / s) at 1
+      // (2 + 2 * (1-qw) / 3) * q.vec();
+      omega = ( 8. / 3. - 2. / 3. * qw) * q.vec();
+    } else if (qw < NearlyNegativeOne) {
+      // Taylor expansion of (angle / s) at -1
+      // (-2 - 2 * (1 + qw) / 3) * q.vec();
+      omega = (-8. / 3. - 2. / 3. * qw) * q.vec();
+    } else {
+      // Normal, away from zero case
+      double angle = 2 * acos(qw), s = sqrt(1 - qw * qw);
+      // Important:  convert to [-pi,pi] to keep error continuous
+      if (angle > M_PI)
+      angle -= twoPi;
+      else if (angle < -M_PI)
+      angle += twoPi;
+      omega = (angle / s) * q.vec();
+    }
+    return omega;
+  }
 
 template <typename T>
 T wrap_angle(T angle) {
@@ -32,14 +85,14 @@ T wrap_angle(T angle) {
 namespace Swarm {
 class Pose {
 
-    Eigen::Vector3d position = Eigen::Vector3d(0, 0, 0);
-    Eigen::Quaterniond attitude = Eigen::Quaterniond(1, 0, 0, 0);
-    Eigen::Quaterniond attitude_yaw_only = Eigen::Quaterniond(1, 0, 0, 0);
+    Vector3d position = Vector3d(0, 0, 0);
+    Quaterniond attitude = Quaterniond(1, 0, 0, 0);
+    Quaterniond attitude_yaw_only = Quaterniond(1, 0, 0, 0);
     double _yaw = 0;
 
     void update_yaw() {
         _yaw = wrap_angle(this->rpy().z());
-        attitude_yaw_only = (Eigen::Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
+        attitude_yaw_only = (Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
 public:
@@ -84,28 +137,28 @@ public:
         ret[1] = T(position.y());
     }
 
-    Eigen::Vector3d apply_pose_to(Eigen::Vector3d point) const {
+    Vector3d apply_pose_to(Vector3d point) const {
         return attitude * point + position;
     }
 
-    Eigen::Vector3d apply_inv_pose_to(Eigen::Vector3d point) const {
+    Vector3d apply_inv_pose_to(Vector3d point) const {
         return attitude.inverse() * (point - position);
     }
 
 
-    Eigen::Vector3d rpy() const {
+    Vector3d rpy() const {
         return quat2eulers(attitude);
     }
 
-    Pose(Eigen::Isometry3d trans) {
+    Pose(Isometry3d trans) {
         position = trans.translation();
         attitude = trans.rotation();
 
         update_yaw();
     }
 
-    Eigen::Isometry3d to_isometry() const {
-        Eigen::Isometry3d a = Eigen::Translation3d(position) * attitude;
+    Isometry3d to_isometry() const {
+        Isometry3d a = Translation3d(position) * attitude;
         return a;
     }
 
@@ -137,7 +190,7 @@ public:
 
 
 
-    Pose(Eigen::Vector3d pos, double yaw) {
+    Pose(Vector3d pos, double yaw) {
         this->attitude = AngleAxisd(yaw, Vector3d::UnitZ());
         position = pos;
         attitude.normalize();
@@ -145,7 +198,7 @@ public:
         update_yaw();
     }
 
-    Pose(Eigen::Vector3d pos, Eigen::Quaterniond att) {
+    Pose(Vector3d pos, Quaterniond att) {
         this->attitude = att;
         position = pos;
         attitude.normalize();
@@ -165,7 +218,7 @@ public:
         update_yaw();
     }
 
-    Pose(const Eigen::Matrix3d & R, const Eigen::Vector3d & T) {
+    Pose(const Matrix3d & R, const Vector3d & T) {
         attitude = R;
         attitude.normalize();
         position = T;
@@ -173,7 +226,7 @@ public:
     }
 
 
-    Pose(const Eigen::Quaterniond & Q, const Eigen::Vector3d &T) {
+    Pose(const Quaterniond & Q, const Vector3d &T) {
         attitude = Q;
         attitude.normalize();
         position = T;
@@ -241,7 +294,7 @@ public:
         return p;
     }
 
-    friend Eigen::Vector3d operator*(Pose a, Eigen::Vector3d point) {
+    friend Vector3d operator*(Pose a, Vector3d point) {
         return a.attitude * point + a.position;
     }
 
@@ -263,8 +316,8 @@ public:
 
             YawRotatePoint(-posea[3], tmp, dpose);*/
             double dyaw = wrap_angle(b.yaw() - a.yaw());
-            Eigen::Vector3d dp = b.position - a.position;
-            p.attitude = (Eigen::Quaterniond)AngleAxisd(dyaw, Vector3d::UnitZ());
+            Vector3d dp = b.position - a.position;
+            p.attitude = (Quaterniond)AngleAxisd(dyaw, Vector3d::UnitZ());
 
             p._yaw = dyaw;
             p.attitude_yaw_only = p.attitude;
@@ -279,6 +332,16 @@ public:
         return p;
     }
 
+    static double MahalanobisDistance(const Pose &a, const Pose &b, Eigen::Matrix6d cov) {
+        return DeltaPose(a, b).MahalanobisNorm(cov);
+    }
+
+    double MahalanobisNorm(Eigen::Matrix6d cov_mat) const {
+        auto _logmap = this->log_map();
+        auto ret = _logmap.transpose() * cov_mat.inverse() * _logmap;
+        return std::sqrt(ret(0, 0));
+    }
+
     inline double & yaw() {
         return _yaw;
     }
@@ -289,55 +352,88 @@ public:
     
     void update_attitude() {
         _yaw = wrap_angle(_yaw);
-        attitude = attitude_yaw_only = (Eigen::Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
+        attitude = attitude_yaw_only = (Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
-    std::string tostr() const {
+    std::string tostr(bool for_file=false) const {
         auto _rpy = rpy();
-        char _ret[100] = {0};
-        sprintf(_ret, "T [%3.3f,%3.3f,%3.3f] YPR [%3.1f,%3.1f,%3.1f]\n",
+        char _ret[128] = {0};
+        if (for_file) {
+            sprintf(_ret, "%3.4f %3.4f %3.4f %3.4f %3.4f %3.4f %3.4f",
+               position.x(), position.y(), position.z(),
+               attitude.w(), attitude.x(), attitude.y(), attitude.z());
+
+        } else {
+        sprintf(_ret, "T [%+3.3f,%+3.3f,%+3.3f] YPR [%+3.1f,%+3.1f,%+3.1f]",
                position.x(), position.y(), position.z(),
                _rpy.z() * 57.3,
                _rpy.y() * 57.3,
                _rpy.x() * 57.3);
+        }
         return std::string(_ret);
     }
+
     void print() const {
         std::cout << tostr();
     }
 
-    inline Eigen::Vector3d pos() const {
+    inline Vector3d pos() const {
         return position;
     }
 
-    inline Eigen::Vector3d & pos() {
+    inline Vector3d & pos() {
         return position;
     }
 
-    inline Eigen::Quaterniond att_yaw_only() const {
+    inline Quaterniond att_yaw_only() const {
         return attitude_yaw_only;
     }
 
-    inline Eigen::Quaterniond att() const {
+    inline Quaterniond att() const {
         return attitude;
     }
 
-    inline Eigen::Quaterniond & att() {
+    inline Quaterniond & att() {
         return attitude;
     }
 
-    inline void set_att(Eigen::Quaterniond att) {
+    inline void set_att(Quaterniond att) {
         attitude = att;
         update_yaw();
     }
 
-    inline void set_pos(Eigen::Vector3d pos) {
+    inline void set_pos(Vector3d pos) {
         position = pos;
     }
 
     inline void set_yaw_only() {
         update_yaw();
         attitude = attitude_yaw_only;
+    }
+
+    Vector6d log_map() const {
+        //T Q
+        //Modified from https://github.com/borglab/gtsam/blob/develop/gtsam/geometry/Pose3.cpp
+        const Vector3d w = Logmap(att());
+        const Vector3d T = pos();
+        const double t = w.norm();
+        if (t < 1e-10) {
+            Vector6d ret;
+            ret.block<3, 1>(0, 0) = T;
+            ret.block<3, 1>(3, 0) = w;
+            return ret;
+        } else {
+            const Matrix3d W = skewSymmetric(w / t);
+            // Formula from Agrawal06iros, equation (14)
+            // simplified with Mathematica, and multiplying in T to avoid matrix math
+            const double Tan = tan(0.5 * t);
+            const Vector3d WT = W * T;
+            const Vector3d u = T - (0.5 * t) * WT + (1 - t / (2. * Tan)) * (W * WT);
+            Vector6d ret;
+            ret.block<3, 1>(0, 0) = u;
+            ret.block<3, 1>(3, 0) = w;
+            return ret;
+        }
     }
 
     Pose() {}
@@ -355,7 +451,13 @@ inline std::ostream& operator<<(std::ostream& output, Pose & pose) {
     output << pose.tostr();
     return output;
 }
-typedef std::pair<int64_t, Pose> PoseStamped;
-typedef std::vector<PoseStamped> Path;
+// typedef std::pair<TsType, Pose> PoseStamped;
+// typedef std::vector<PoseStamped> Path;
+
+template <typename Vec, typename Mat>
+inline double computeSquaredMahalanobisDistance(Vec logmap, Mat cov_mat) {
+    auto ret = logmap.transpose() * cov_mat.inverse() * logmap;
+    return std::sqrt(ret(0, 0));
+}
 
 } // namespace Swarm
