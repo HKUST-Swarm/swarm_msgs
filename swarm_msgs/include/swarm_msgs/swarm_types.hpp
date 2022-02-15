@@ -225,8 +225,8 @@ public:
 
     LoopEdge(swarm_msgs::LoopEdge loc, bool yaw_only = false) {
         id = loc.id;
-        id_a = loc.id_a;
-        id_b = loc.id_b;
+        id_a = loc.drone_id_a;
+        id_b = loc.drone_id_b;
         ts_a = loc.ts_a.toNSec();
         ts_b = loc.ts_b.toNSec();
 
@@ -296,8 +296,8 @@ public:
     swarm_msgs::LoopEdge toros() const {
         swarm_msgs::LoopEdge loc;
         loc.id = id;
-        loc.id_a = id_a;
-        loc.id_b = id_b;
+        loc.drone_id_a = id_a;
+        loc.drone_id_b = id_b;
         loc.ts_a = stamp_a;
         loc.ts_b = stamp_b;
 
@@ -338,8 +338,8 @@ public:
         inf_mat(_inf_mat)
     {
         id = loc.id;
-        id_a = loc.id_a;
-        id_b = loc.id_b;
+        id_a = loc.drone_id_a;
+        id_b = loc.drone_id_b;
         ts_a = loc.ts_a.toNSec();
         ts_b = loc.ts_b.toNSec();
 

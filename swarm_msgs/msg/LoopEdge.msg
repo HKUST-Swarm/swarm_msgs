@@ -1,7 +1,7 @@
 time ts_a
 time ts_b
-uint64 id_a
-uint64 id_b
+uint64 drone_id_a
+uint64 drone_id_b
 uint64 keyframe_id_a
 uint64 keyframe_id_b
 geometry_msgs/Pose relative_pose

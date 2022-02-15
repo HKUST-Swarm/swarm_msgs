@@ -27,9 +27,13 @@ class LoopEdge_t
 
         int64_t    id;
 
-        int32_t    id_a;
+        int32_t    drone_id_a;
 
-        int32_t    id_b;
+        int32_t    drone_id_b;
+
+        int32_t    keyframe_id_a;
+
+        int32_t    keyframe_id_b;
 
         Pose_t     relative_pose;
 
@@ -148,10 +152,16 @@ int LoopEdge_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->id_a, 1);
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id_a, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->id_b, 1);
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id_b, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->keyframe_id_a, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->keyframe_id_b, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->relative_pose._encodeNoHash(buf, offset + pos, maxlen - pos);
@@ -188,10 +198,16 @@ int LoopEdge_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->id_a, 1);
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id_a, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->id_b, 1);
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id_b, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->keyframe_id_a, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->keyframe_id_b, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->relative_pose._decodeNoHash(buf, offset + pos, maxlen - pos);
@@ -223,6 +239,8 @@ int LoopEdge_t::_getEncodedSizeNoHash() const
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += this->relative_pose._getEncodedSizeNoHash();
     enc_size += this->self_pose_a._getEncodedSizeNoHash();
     enc_size += this->self_pose_b._getEncodedSizeNoHash();
@@ -240,7 +258,7 @@ uint64_t LoopEdge_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, LoopEdge_t::getHash };
 
-    uint64_t hash = 0xade9293a5a8fef09LL +
+    uint64_t hash = 0xdb50a9f7ca146852LL +
          Time_t::_computeHash(&cp) +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

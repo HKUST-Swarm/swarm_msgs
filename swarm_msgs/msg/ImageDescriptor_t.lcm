@@ -101,8 +101,12 @@ struct LoopEdge_t {
     Time_t ts_a;
     Time_t ts_b;
     int64_t id;
-    int32_t id_a;
-    int32_t id_b;
+    int32_t drone_id_a;
+    int32_t drone_id_b;
+
+    int32_t keyframe_id_a;
+    int32_t keyframe_id_b;
+
     Pose_t relative_pose;
     Pose_t self_pose_a;
     Pose_t self_pose_b;
@@ -114,8 +118,12 @@ struct LoopEdge_t {
 struct DroneDetection6d_t {
     Time_t ts;
     int64_t id;
-    int32_t id_a;
-    int32_t id_b;
+    int32_t drone_id_a;
+    int32_t drone_id_b;
+    
+    int32_t keyframe_id_a;
+    int32_t keyframe_id_b;
+
     Pose_t relative_pose;
     Pose_t self_pose_a;
     Point3d_t pos_cov;
