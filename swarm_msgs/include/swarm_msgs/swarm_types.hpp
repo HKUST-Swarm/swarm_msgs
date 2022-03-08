@@ -374,7 +374,7 @@ public:
         //Not accurate
         sqrt_inf_mat = _inf_mat.cwiseSqrt();
         cov_mat = _inf_mat.cwiseInverse();
-        std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
+        // std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
     }
 
     // LoopEdge(const LoopEdge &loc) {
