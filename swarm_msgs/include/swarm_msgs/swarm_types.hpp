@@ -360,29 +360,49 @@ public:
         sqrt_inf_mat = _inf_mat.cwiseSqrt();
     }
 
-    LoopEdge(const LoopEdge &loc) {
-        id = loc.id;
-        id_a = loc.id_a;
-        id_b = loc.id_b;
-        ts_a = loc.ts_a;
-        ts_b = loc.ts_b;
+    LoopEdge(int keyframe_ida, int keyframe_idb, Swarm::Pose pose, Eigen::Matrix6d _inf_mat):
+        relative_pose(pose),
+        inf_mat(_inf_mat)
+    {
+        keyframe_id_a = keyframe_ida;
+        keyframe_id_b = keyframe_idb;
+        
+        measurement_type = Loop;
+        res_count = 6;
+        has_information_matrix = true;
 
-        stamp_a = loc.stamp_a;
-        stamp_b = loc.stamp_b;
-
-        keyframe_id_a = loc.keyframe_id_a;
-        keyframe_id_b = loc.keyframe_id_b;
-
-        relative_pose = loc.relative_pose;
-
-        self_pose_a = loc.self_pose_a;
-        self_pose_b = loc.self_pose_b;
-
-        set_covariance(loc.cov_mat);
-
-        measurement_type = loc.measurement_type;
-        res_count = loc.res_count;
+        //Not accurate
+        sqrt_inf_mat = _inf_mat.cwiseSqrt();
+        cov_mat = _inf_mat.cwiseInverse();
+        std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
     }
+
+    // LoopEdge(const LoopEdge &loc) {
+    //     id = loc.id;
+    //     id_a = loc.id_a;
+    //     id_b = loc.id_b;
+    //     ts_a = loc.ts_a;
+    //     ts_b = loc.ts_b;
+
+    //     stamp_a = loc.stamp_a;
+    //     stamp_b = loc.stamp_b;
+
+    //     keyframe_id_a = loc.keyframe_id_a;
+    //     keyframe_id_b = loc.keyframe_id_b;
+
+    //     relative_pose = loc.relative_pose;
+
+    //     self_pose_a = loc.self_pose_a;
+    //     self_pose_b = loc.self_pose_b;
+
+    //     has_information_matrix = loc.has_information_matrix;
+    //     cov_mat = loc.cov_mat;
+    //     sqrt_inf_mat = loc.sqrt_inf_mat;
+    //     inf_mat = loc.inf_mat;
+
+    //     measurement_type = loc.measurement_type;
+    //     res_count = loc.res_count;
+    // }
     
     LoopEdge() {
         measurement_type = Loop;
@@ -497,7 +517,7 @@ public:
     bool has_detect_relpose = false;
     bool is_static = false;
     Node *node = nullptr;
-    int id = -1;
+    int drone_id = -1;
     FrameIdType keyframe_id = -1;
 
     DisMap dis_map;
@@ -565,7 +585,7 @@ public:
     }
 
     bool distance_available(int _idj) const {
-        if (_idj == id) {
+        if (_idj == drone_id) {
             return false;
         }
         // bool enab_distance = false;
@@ -738,7 +758,7 @@ public:
         ts_trajectory.push_back(nf.ts);
         stamp_trajectory.push_back(nf.stamp);
         ts2index[nf.ts] = trajectory_frames.size() - 1;
-        id2index[nf.id] = trajectory_frames.size() - 1;
+        id2index[nf.drone_id] = trajectory_frames.size() - 1;
 
 
         geometry_msgs::PoseStamped _pose_stamped;

@@ -29,6 +29,7 @@ struct ImageDescriptorHeader_t {
     Pose_t camera_extrinsic;
     boolean prevent_adding_db;
     int64_t msg_id;
+    int64_t frame_id;
     int32_t feature_num;
     int32_t direction;
 }
@@ -84,6 +85,7 @@ struct ImageDescriptor_t {
     
     boolean prevent_adding_db;
     int64_t msg_id;
+    int64_t frame_id;
 }
 
 struct FisheyeFrameDescriptor_t {

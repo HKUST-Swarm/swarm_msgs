@@ -61,6 +61,8 @@ class ImageDescriptor_t
 
         int64_t    msg_id;
 
+        int64_t    frame_id;
+
     public:
         /**
          * Encode a message into binary form.
@@ -231,6 +233,9 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -331,6 +336,9 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -363,6 +371,7 @@ int ImageDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += __byte_encoded_array_size(NULL, this->landmark_num);
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
@@ -374,7 +383,7 @@ uint64_t ImageDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptor_t::getHash };
 
-    uint64_t hash = 0xfe163e42c1c415b7LL +
+    uint64_t hash = 0x46a0aa81654d9ddaLL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

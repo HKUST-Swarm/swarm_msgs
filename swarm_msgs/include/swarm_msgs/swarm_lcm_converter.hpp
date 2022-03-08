@@ -178,10 +178,10 @@ inline swarm_msgs::LoopEdge toROSLoopEdge(const LoopEdge_t & loop_con) {
     loop_conn.ts_b =  toROSTime(loop_con.ts_b);
 
     loop_conn.drone_id_a = loop_con.drone_id_a;
-    loop_conn.drone_id_b = loop_con.drone_id_a;
+    loop_conn.drone_id_b = loop_con.drone_id_b;
 
     loop_conn.keyframe_id_a = loop_con.keyframe_id_a;
-    loop_conn.keyframe_id_b = loop_con.keyframe_id_a;
+    loop_conn.keyframe_id_b = loop_con.keyframe_id_b;
 
     loop_conn.relative_pose = toROSPose(loop_con.relative_pose);
     loop_conn.self_pose_a = toROSPose(loop_con.self_pose_a);
@@ -210,7 +210,7 @@ inline LoopEdge_t toLCMLoopEdge(const swarm_msgs::LoopEdge & loop_con) {
     loop_conn.drone_id_b = loop_con.drone_id_b;
 
     loop_conn.keyframe_id_a = loop_con.keyframe_id_a;
-    loop_conn.keyframe_id_b = loop_con.keyframe_id_a;
+    loop_conn.keyframe_id_b = loop_con.keyframe_id_b;
     
     loop_conn.pnp_inlier_num = loop_con.pnp_inlier_num;
 
