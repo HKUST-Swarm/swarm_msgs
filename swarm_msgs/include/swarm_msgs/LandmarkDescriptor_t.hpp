@@ -33,6 +33,8 @@ class LandmarkDescriptor_t
 
         Point3d_t  landmark_3d;
 
+        float      landmark_depth;
+
         uint8_t    landmark_flag;
 
         int64_t    msg_id;
@@ -158,6 +160,9 @@ int LandmarkDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = this->landmark_3d._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_depth, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __byte_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_flag, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -198,6 +203,9 @@ int LandmarkDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = this->landmark_3d._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_depth, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __byte_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_flag, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -220,6 +228,7 @@ int LandmarkDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += this->landmark_2d_norm._getEncodedSizeNoHash();
     enc_size += this->landmark_2d._getEncodedSizeNoHash();
     enc_size += this->landmark_3d._getEncodedSizeNoHash();
+    enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __byte_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
@@ -234,7 +243,7 @@ uint64_t LandmarkDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, LandmarkDescriptor_t::getHash };
 
-    uint64_t hash = 0x6cb44e848fde361cLL +
+    uint64_t hash = 0x0e89fda3f2a8b285LL +
          Point2d_t::_computeHash(&cp) +
          Point2d_t::_computeHash(&cp) +
          Point3d_t::_computeHash(&cp);

@@ -55,6 +55,8 @@ class ImageDescriptor_t
 
         std::vector< Point3d_t > landmarks_3d;
 
+        std::vector< float > landmarks_depth;
+
         std::vector< int32_t > landmarks_id;
 
         std::vector< uint8_t > landmarks_flag;
@@ -225,6 +227,11 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     }
 
     if(this->landmark_num > 0) {
+        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->landmarks_depth[0], this->landmark_num);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    if(this->landmark_num > 0) {
         tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmarks_id[0], this->landmark_num);
         if(tlen < 0) return tlen; else pos += tlen;
     }
@@ -332,6 +339,12 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     }
 
     if(this->landmark_num) {
+        this->landmarks_depth.resize(this->landmark_num);
+        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->landmarks_depth[0], this->landmark_num);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    if(this->landmark_num) {
         this->landmarks_id.resize(this->landmark_num);
         tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmarks_id[0], this->landmark_num);
         if(tlen < 0) return tlen; else pos += tlen;
@@ -381,6 +394,7 @@ int ImageDescriptor_t::_getEncodedSizeNoHash() const
     for (int a0 = 0; a0 < this->landmark_num; a0++) {
         enc_size += this->landmarks_3d[a0]._getEncodedSizeNoHash();
     }
+    enc_size += __float_encoded_array_size(NULL, this->landmark_num);
     enc_size += __int32_t_encoded_array_size(NULL, this->landmark_num);
     enc_size += __byte_encoded_array_size(NULL, this->landmark_num);
     enc_size += __boolean_encoded_array_size(NULL, 1);
@@ -397,7 +411,7 @@ uint64_t ImageDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptor_t::getHash };
 
-    uint64_t hash = 0x2b97cd6118909b59LL +
+    uint64_t hash = 0x97a2cb8fff4aadf7LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

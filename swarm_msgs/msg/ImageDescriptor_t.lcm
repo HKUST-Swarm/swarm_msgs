@@ -43,6 +43,7 @@ struct LandmarkDescriptor_t {
     Point2d_t landmark_2d_norm;
     Point2d_t landmark_2d;
     Point3d_t landmark_3d;
+    float landmark_depth;
     byte landmark_flag;
 
     int64_t msg_id;
@@ -81,6 +82,7 @@ struct ImageDescriptor_t {
     Point2d_t landmarks_2d_norm[landmark_num];
     Point2d_t landmarks_2d[landmark_num];
     Point3d_t landmarks_3d[landmark_num];
+    float landmarks_depth[landmark_num];
     int32_t landmarks_id[landmark_num];
     byte landmarks_flag[landmark_num];
     
