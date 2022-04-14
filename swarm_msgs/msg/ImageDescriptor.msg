@@ -1,5 +1,6 @@
 Header header
 int32 drone_id
+int32 camera_id
 
 float32[] feature_descriptor
 
@@ -14,6 +15,7 @@ uint8[] image
 geometry_msgs/Point32[] landmarks_2d_norm
 geometry_msgs/Point32[] landmarks_2d
 geometry_msgs/Point32[] landmarks_3d
+int32[] landmarks_id
 uint8[] landmarks_flag
 bool prevent_adding_db
 
