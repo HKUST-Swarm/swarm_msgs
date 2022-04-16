@@ -49,7 +49,7 @@ struct LandmarkDescriptor_t {
     //MTU is 2304, better make it lower than 2000 byte
     Landmark_t landmark;
     int32_t desc_len;
-    float feature_descriptor[desc_len];
+    float landmark_descriptor[desc_len];
     int64_t msg_id;
     int64_t header_id;
 }

@@ -21,7 +21,7 @@ class LandmarkDescriptor_t
 
         int32_t    desc_len;
 
-        std::vector< float > feature_descriptor;
+        std::vector< float > landmark_descriptor;
 
         int64_t    msg_id;
 
@@ -130,7 +130,7 @@ int LandmarkDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     if(tlen < 0) return tlen; else pos += tlen;
 
     if(this->desc_len > 0) {
-        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->feature_descriptor[0], this->desc_len);
+        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor[0], this->desc_len);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -154,8 +154,8 @@ int LandmarkDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     if(tlen < 0) return tlen; else pos += tlen;
 
     if(this->desc_len) {
-        this->feature_descriptor.resize(this->desc_len);
-        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->feature_descriptor[0], this->desc_len);
+        this->landmark_descriptor.resize(this->desc_len);
+        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor[0], this->desc_len);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -187,7 +187,7 @@ uint64_t LandmarkDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, LandmarkDescriptor_t::getHash };
 
-    uint64_t hash = 0xcc5a99a716ec1a98LL +
+    uint64_t hash = 0xa03a31e3ccdf00b5LL +
          Landmark_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
