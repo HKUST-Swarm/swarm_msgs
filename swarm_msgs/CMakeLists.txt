@@ -33,7 +33,8 @@ add_message_files(
         ImageDescriptor.msg
         LoopEdge.msg
         LoopEdges.msg
-        FisheyeFrameDescriptor.msg
+        Landmark.msg
+        ImageArrayDescriptor.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

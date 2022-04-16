@@ -13,9 +13,7 @@
 #include "Time_t.hpp"
 #include "Pose_t.hpp"
 #include "Pose_t.hpp"
-#include "Point2d_t.hpp"
-#include "Point2d_t.hpp"
-#include "Point3d_t.hpp"
+#include "Landmark_t.hpp"
 
 
 class ImageDescriptor_t
@@ -25,9 +23,9 @@ class ImageDescriptor_t
 
         int32_t    drone_id;
 
-        int32_t    feature_descriptor_size;
+        int32_t    landmark_descriptor_size;
 
-        std::vector< float > feature_descriptor;
+        std::vector< float > landmark_descriptor;
 
         int32_t    image_desc_size;
 
@@ -49,17 +47,7 @@ class ImageDescriptor_t
 
         int32_t    landmark_num;
 
-        std::vector< Point2d_t > landmarks_2d_norm;
-
-        std::vector< Point2d_t > landmarks_2d;
-
-        std::vector< Point3d_t > landmarks_3d;
-
-        std::vector< float > landmarks_depth;
-
-        std::vector< int32_t > landmarks_id;
-
-        std::vector< uint8_t > landmarks_flag;
+        std::vector< Landmark_t > landmarks;
 
         int8_t     prevent_adding_db;
 
@@ -169,11 +157,11 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->feature_descriptor_size, 1);
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_size, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    if(this->feature_descriptor_size > 0) {
-        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->feature_descriptor[0], this->feature_descriptor_size);
+    if(this->landmark_descriptor_size > 0) {
+        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor[0], this->landmark_descriptor_size);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -212,32 +200,7 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     if(tlen < 0) return tlen; else pos += tlen;
 
     for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        tlen = this->landmarks_2d_norm[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        tlen = this->landmarks_2d[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        tlen = this->landmarks_3d[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    if(this->landmark_num > 0) {
-        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->landmarks_depth[0], this->landmark_num);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    if(this->landmark_num > 0) {
-        tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmarks_id[0], this->landmark_num);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    if(this->landmark_num > 0) {
-        tlen = __byte_encode_array(buf, offset + pos, maxlen - pos, &this->landmarks_flag[0], this->landmark_num);
+        tlen = this->landmarks[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -263,12 +226,12 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->feature_descriptor_size, 1);
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_size, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    if(this->feature_descriptor_size) {
-        this->feature_descriptor.resize(this->feature_descriptor_size);
-        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->feature_descriptor[0], this->feature_descriptor_size);
+    if(this->landmark_descriptor_size) {
+        this->landmark_descriptor.resize(this->landmark_descriptor_size);
+        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor[0], this->landmark_descriptor_size);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -309,50 +272,12 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     if(tlen < 0) return tlen; else pos += tlen;
 
     try {
-        this->landmarks_2d_norm.resize(this->landmark_num);
+        this->landmarks.resize(this->landmark_num);
     } catch (...) {
         return -1;
     }
     for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        tlen = this->landmarks_2d_norm[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    try {
-        this->landmarks_2d.resize(this->landmark_num);
-    } catch (...) {
-        return -1;
-    }
-    for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        tlen = this->landmarks_2d[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    try {
-        this->landmarks_3d.resize(this->landmark_num);
-    } catch (...) {
-        return -1;
-    }
-    for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        tlen = this->landmarks_3d[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    if(this->landmark_num) {
-        this->landmarks_depth.resize(this->landmark_num);
-        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->landmarks_depth[0], this->landmark_num);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    if(this->landmark_num) {
-        this->landmarks_id.resize(this->landmark_num);
-        tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmarks_id[0], this->landmark_num);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    if(this->landmark_num) {
-        this->landmarks_flag.resize(this->landmark_num);
-        tlen = __byte_decode_array(buf, offset + pos, maxlen - pos, &this->landmarks_flag[0], this->landmark_num);
+        tlen = this->landmarks[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -374,7 +299,7 @@ int ImageDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += this->timestamp._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __float_encoded_array_size(NULL, this->feature_descriptor_size);
+    enc_size += __float_encoded_array_size(NULL, this->landmark_descriptor_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, this->image_desc_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
@@ -386,17 +311,8 @@ int ImageDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += this->camera_extrinsic._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        enc_size += this->landmarks_2d_norm[a0]._getEncodedSizeNoHash();
+        enc_size += this->landmarks[a0]._getEncodedSizeNoHash();
     }
-    for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        enc_size += this->landmarks_2d[a0]._getEncodedSizeNoHash();
-    }
-    for (int a0 = 0; a0 < this->landmark_num; a0++) {
-        enc_size += this->landmarks_3d[a0]._getEncodedSizeNoHash();
-    }
-    enc_size += __float_encoded_array_size(NULL, this->landmark_num);
-    enc_size += __int32_t_encoded_array_size(NULL, this->landmark_num);
-    enc_size += __byte_encoded_array_size(NULL, this->landmark_num);
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
@@ -411,13 +327,11 @@ uint64_t ImageDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptor_t::getHash };
 
-    uint64_t hash = 0x97a2cb8fff4aadf7LL +
+    uint64_t hash = 0x8f2dfcb92d9a1849LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
-         Point2d_t::_computeHash(&cp) +
-         Point2d_t::_computeHash(&cp) +
-         Point3d_t::_computeHash(&cp);
+         Landmark_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
 }

@@ -38,7 +38,7 @@ inline TsType TSLong(TsType ts) {
 
 template <typename T>
 long search_closest(const std::vector<T>& sorted_array, double x) {
-
+    //Need to refactor to binary search
     auto iter_geq = std::lower_bound(
         sorted_array.begin(), 
         sorted_array.end(), 

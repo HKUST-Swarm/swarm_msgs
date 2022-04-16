@@ -4,8 +4,8 @@ struct Pose_t {
 }
 
 struct Point2d_t {
-    float x;
-    float y;
+    double x;
+    double y;
 }
 
 struct Point3d_t {
@@ -34,18 +34,22 @@ struct ImageDescriptorHeader_t {
     int32_t direction;
 }
 
-struct LandmarkDescriptor_t {
-    //MTU is 2304, better make it lower than 2000 byte
+struct Landmark_t {
+    int32_t frame_id;
     int32_t landmark_id;
     int32_t drone_id;
+    int32_t flag;
+    Point2d_t pt2d;
+    Point2d_t pt2d_norm;
+    Point3d_t pt3d;
+    double depth;
+}
+
+struct LandmarkDescriptor_t {
+    //MTU is 2304, better make it lower than 2000 byte
+    Landmark_t landmark;
     int32_t desc_len;
     float feature_descriptor[desc_len];
-    Point2d_t landmark_2d_norm;
-    Point2d_t landmark_2d;
-    Point3d_t landmark_3d;
-    float landmark_depth;
-    byte landmark_flag;
-
     int64_t msg_id;
     int64_t header_id;
 }
@@ -61,8 +65,8 @@ struct ImageDescriptor_t {
     Time_t  timestamp;
     int32_t drone_id;
 
-    int32_t feature_descriptor_size;
-    float feature_descriptor[feature_descriptor_size];
+    int32_t landmark_descriptor_size;
+    float landmark_descriptor[landmark_descriptor_size];
 
     int32_t image_desc_size;
     float image_desc[image_desc_size];
@@ -79,19 +83,14 @@ struct ImageDescriptor_t {
 
     int32_t landmark_num;
     
-    Point2d_t landmarks_2d_norm[landmark_num];
-    Point2d_t landmarks_2d[landmark_num];
-    Point3d_t landmarks_3d[landmark_num];
-    float landmarks_depth[landmark_num];
-    int32_t landmarks_id[landmark_num];
-    byte landmarks_flag[landmark_num];
+    Landmark_t landmarks[landmark_num];
     
     boolean prevent_adding_db;
     int64_t msg_id;
     int64_t frame_id;
 }
 
-struct FisheyeFrameDescriptor_t {
+struct ImageArrayDescriptor_t {
     int64_t msg_id;
     int32_t image_num;
     boolean prevent_adding_db;

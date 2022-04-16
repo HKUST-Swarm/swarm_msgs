@@ -8,8 +8,8 @@
 #include <swarm_msgs/LoopEdge.h>
 #include "LoopEdge_t.hpp"
 #include <swarm_msgs/Pose.h>
-#include <swarm_msgs/FisheyeFrameDescriptor.h>
-#include <swarm_msgs/FisheyeFrameDescriptor_t.hpp>
+#include <swarm_msgs/ImageArrayDescriptor.h>
+#include <swarm_msgs/ImageArrayDescriptor_t.hpp>
 #include <swarm_msgs/swarm_types.hpp>
 
 inline Pose_t fromROSPose(const geometry_msgs::Pose & pose) {
