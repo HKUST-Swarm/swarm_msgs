@@ -1,15 +1,16 @@
 #pragma once
-
-#include "ImageDescriptor_t.hpp"
-#include <swarm_msgs/ImageDescriptor.h>
+#include <opencv2/opencv.hpp>
+#include <swarm_msgs/Pose.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point32.h>
-#include <opencv2/opencv.hpp>
 #include <swarm_msgs/LoopEdge.h>
-#include "LoopEdge_t.hpp"
-#include <swarm_msgs/Pose.h>
+#include "lcm_gen/LoopEdge_t.hpp"
+#include "lcm_gen/ImageArrayDescriptor_t.hpp"
+#include "lcm_gen/ImageDescriptor_t.hpp"
+#include "lcm_gen/LandmarkDescriptor_t.hpp"
+#include "lcm_gen/ImageDescriptorHeader_t.hpp"
 #include <swarm_msgs/ImageArrayDescriptor.h>
-#include <swarm_msgs/ImageArrayDescriptor_t.hpp>
+#include <swarm_msgs/ImageDescriptor.h>
 #include <swarm_msgs/swarm_types.hpp>
 
 inline Pose_t fromROSPose(const geometry_msgs::Pose & pose) {

@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 #include <geometry_msgs/Pose.h>
-#include "Pose_t.hpp"
+#include "lcm_gen/Pose_t.hpp"
 
 using namespace Eigen;
 
