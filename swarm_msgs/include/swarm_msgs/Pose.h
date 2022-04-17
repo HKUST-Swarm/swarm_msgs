@@ -355,7 +355,7 @@ public:
         attitude = attitude_yaw_only = (Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
-    std::string tostr(bool for_file=false) const {
+    std::string toStr(bool for_file=false) const {
         auto _rpy = rpy();
         char _ret[128] = {0};
         if (for_file) {
@@ -374,7 +374,7 @@ public:
     }
 
     void print() const {
-        std::cout << tostr();
+        std::cout << toStr();
     }
 
     inline Vector3d pos() const {
@@ -448,7 +448,7 @@ inline std::istream& operator>>(std::istream& input, Pose & pose) {
 
 
 inline std::ostream& operator<<(std::ostream& output, Pose & pose) {
-    output << pose.tostr();
+    output << pose.toStr();
     return output;
 }
 // typedef std::pair<TsType, Pose> PoseStamped;

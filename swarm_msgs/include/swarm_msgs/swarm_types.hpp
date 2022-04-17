@@ -797,7 +797,7 @@ public:
         auto indexb = ts2index.at(tsb);
 
         auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb), pose_4d);
-        // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.tostr().c_str());
+        // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.toStr().c_str());
         return std::make_pair(rp, covariance_between_ts(tsa, tsb));
     }
     
