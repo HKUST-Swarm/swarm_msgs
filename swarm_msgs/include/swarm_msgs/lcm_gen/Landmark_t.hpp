@@ -12,6 +12,7 @@
 #include "Point2d_t.hpp"
 #include "Point2d_t.hpp"
 #include "Point3d_t.hpp"
+#include "Point3d_t.hpp"
 
 
 class Landmark_t
@@ -23,6 +24,8 @@ class Landmark_t
 
         int32_t    drone_id;
 
+        int32_t    camera_id;
+
         int32_t    flag;
 
         Point2d_t  pt2d;
@@ -30,6 +33,8 @@ class Landmark_t
         Point2d_t  pt2d_norm;
 
         Point3d_t  pt3d;
+
+        Point3d_t  velocity;
 
         double     depth;
 
@@ -138,6 +143,9 @@ int Landmark_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->flag, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -148,6 +156,9 @@ int Landmark_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->pt3d._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->velocity._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->depth, 1);
@@ -169,6 +180,9 @@ int Landmark_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->flag, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -179,6 +193,9 @@ int Landmark_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->pt3d._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->velocity._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->depth, 1);
@@ -194,9 +211,11 @@ int Landmark_t::_getEncodedSizeNoHash() const
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += this->pt2d._getEncodedSizeNoHash();
     enc_size += this->pt2d_norm._getEncodedSizeNoHash();
     enc_size += this->pt3d._getEncodedSizeNoHash();
+    enc_size += this->velocity._getEncodedSizeNoHash();
     enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
@@ -209,9 +228,10 @@ uint64_t Landmark_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, Landmark_t::getHash };
 
-    uint64_t hash = 0x5e12290bd0b652d5LL +
+    uint64_t hash = 0x15079de1d4f48ea2LL +
          Point2d_t::_computeHash(&cp) +
          Point2d_t::_computeHash(&cp) +
+         Point3d_t::_computeHash(&cp) +
          Point3d_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);

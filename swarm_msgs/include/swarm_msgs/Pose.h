@@ -124,6 +124,23 @@ public:
     }
 
     template <typename T>
+    void from_vector(const T v[], bool xyzyaw = false) {
+        if (xyzyaw) {
+            this->attitude = AngleAxisd(v[3], Vector3d::UnitZ());
+        } else {
+            attitude.x() = v[3];
+            attitude.y() = v[4];
+            attitude.z() = v[5];
+            attitude.w() = v[6];
+        }
+        position.x() = v[0];
+        position.y() = v[1];
+        position.z() = v[2];
+        attitude.normalize();
+        update_yaw();
+    }
+
+    template <typename T>
     void to_vector_xyzyaw(T ret[]) const {
         ret[0] = T(position.x());
         ret[1] = T(position.y());
