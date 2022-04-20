@@ -21,12 +21,7 @@
 #define ENABLE_DETECTION
 #define ENABLE_LOOP
 // pixel error/focal length
-
-typedef std::vector<Vector3d> vec_array;
-typedef std::vector<Quaterniond> quat_array;
-typedef std::map<int, double> DisMap;
 typedef int64_t TsType;
-typedef int64_t FrameIdType;
 
 inline int TSShort(TsType ts) {
     return (ts/1000000)%10000000;
@@ -77,6 +72,12 @@ inline Eigen::Matrix<double, 2, 3> tangent_base_for_unit_detect(const Eigen::Vec
 
 using namespace Eigen;
 namespace Swarm {
+typedef int64_t FrameIdType;
+typedef std::vector<Vector3d> vec_array;
+typedef std::vector<Quaterniond> quat_array;
+typedef std::map<int, double> DisMap;
+
+
 class Node {
     protected:
         bool _has_vo = false;
