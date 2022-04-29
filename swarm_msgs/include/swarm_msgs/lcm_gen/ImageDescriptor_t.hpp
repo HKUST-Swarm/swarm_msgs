@@ -39,7 +39,9 @@ class ImageDescriptor_t
 
         std::vector< uint8_t > image;
 
-        int32_t    direction;
+        int32_t    camera_index;
+
+        int32_t    camera_id;
 
         Pose_t     pose_drone;
 
@@ -187,7 +189,10 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->direction, 1);
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->pose_drone._encodeNoHash(buf, offset + pos, maxlen - pos);
@@ -259,7 +264,10 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->direction, 1);
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->pose_drone._decodeNoHash(buf, offset + pos, maxlen - pos);
@@ -307,6 +315,7 @@ int ImageDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __byte_encoded_array_size(NULL, this->image_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += this->pose_drone._getEncodedSizeNoHash();
     enc_size += this->camera_extrinsic._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
@@ -327,7 +336,7 @@ uint64_t ImageDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptor_t::getHash };
 
-    uint64_t hash = 0x8f2dfcb92d9a1849LL +
+    uint64_t hash = 0x86aa8d7953077f43LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

@@ -1,5 +1,6 @@
 Header header
 int32 drone_id
+int32 camera_index
 int32 camera_id
 
 float32[] landmark_descriptor
@@ -15,5 +16,3 @@ uint8[] image
 Landmark[] landmarks
 
 bool prevent_adding_db
-
-int32 direction

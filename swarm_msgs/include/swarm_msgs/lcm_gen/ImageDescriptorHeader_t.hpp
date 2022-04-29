@@ -38,7 +38,7 @@ class ImageDescriptorHeader_t
 
         int32_t    feature_num;
 
-        int32_t    direction;
+        int32_t    camera_index;
 
     public:
         /**
@@ -168,7 +168,7 @@ int ImageDescriptorHeader_t::_encodeNoHash(void *buf, int offset, int maxlen) co
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->feature_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->direction, 1);
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -211,7 +211,7 @@ int ImageDescriptorHeader_t::_decodeNoHash(const void *buf, int offset, int maxl
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->feature_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->direction, 1);
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -242,7 +242,7 @@ uint64_t ImageDescriptorHeader_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptorHeader_t::getHash };
 
-    uint64_t hash = 0x8117a2936e6b7abeLL +
+    uint64_t hash = 0xf6be3eb75683311bLL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp);

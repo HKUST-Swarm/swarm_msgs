@@ -198,7 +198,7 @@ public:
         return id_a != id_b;
     }
 
-    //Same direction, return 1 else 2
+    //Same camera_index, return 1 else 2
     int same_robot_pair(GeneralMeasurement2Drones edge2) const {
         if (is_inter_loop()) {
             if (id_a == edge2.id_a && id_b == edge2.id_b) {

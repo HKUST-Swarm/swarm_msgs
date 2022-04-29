@@ -1,6 +1,6 @@
 int32 frame_id
 int32 landmark_id
-int32 camera_id
+int32 camera_index
 int32 drone_id
 int32 flag
 geometry_msgs/Point32 pt2d
