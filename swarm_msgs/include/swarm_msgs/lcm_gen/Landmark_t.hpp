@@ -10,7 +10,7 @@
 #include <lcm/lcm_coretypes.h>
 
 #include "Point2d_t.hpp"
-#include "Point2d_t.hpp"
+#include "Point3d_t.hpp"
 #include "Point3d_t.hpp"
 #include "Point3d_t.hpp"
 
@@ -30,7 +30,7 @@ class Landmark_t
 
         Point2d_t  pt2d;
 
-        Point2d_t  pt2d_norm;
+        Point3d_t  pt2d_norm;
 
         Point3d_t  pt3d;
 
@@ -230,7 +230,7 @@ uint64_t Landmark_t::_computeHash(const __lcm_hash_ptr *p)
 
     uint64_t hash = 0x47b127eed7e09438LL +
          Point2d_t::_computeHash(&cp) +
-         Point2d_t::_computeHash(&cp) +
+         Point3d_t::_computeHash(&cp) +
          Point3d_t::_computeHash(&cp) +
          Point3d_t::_computeHash(&cp);
 
