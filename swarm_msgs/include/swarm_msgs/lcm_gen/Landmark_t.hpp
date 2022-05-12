@@ -30,7 +30,7 @@ class Landmark_t
 
         Point2d_t  pt2d;
 
-        Point3d_t  pt2d_norm;
+        Point3d_t  pt3d_norm;
 
         Point3d_t  pt3d;
 
@@ -152,7 +152,7 @@ int Landmark_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = this->pt2d._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->pt2d_norm._encodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->pt3d_norm._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->pt3d._encodeNoHash(buf, offset + pos, maxlen - pos);
@@ -189,7 +189,7 @@ int Landmark_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = this->pt2d._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = this->pt2d_norm._decodeNoHash(buf, offset + pos, maxlen - pos);
+    tlen = this->pt3d_norm._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = this->pt3d._decodeNoHash(buf, offset + pos, maxlen - pos);
@@ -213,7 +213,7 @@ int Landmark_t::_getEncodedSizeNoHash() const
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += this->pt2d._getEncodedSizeNoHash();
-    enc_size += this->pt2d_norm._getEncodedSizeNoHash();
+    enc_size += this->pt3d_norm._getEncodedSizeNoHash();
     enc_size += this->pt3d._getEncodedSizeNoHash();
     enc_size += this->velocity._getEncodedSizeNoHash();
     enc_size += __double_encoded_array_size(NULL, 1);

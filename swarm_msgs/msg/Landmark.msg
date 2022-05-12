@@ -4,7 +4,7 @@ int32 camera_index
 int32 drone_id
 int32 flag
 geometry_msgs/Point32 pt2d
-geometry_msgs/Point32 pt2d_norm
+geometry_msgs/Point32 pt3d_norm
 geometry_msgs/Point32 pt3d
 geometry_msgs/Point32 velocity
 float64 depth
