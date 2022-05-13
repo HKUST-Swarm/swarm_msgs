@@ -9,6 +9,7 @@
 
 #include <lcm/lcm_coretypes.h>
 
+#include "Time_t.hpp"
 #include "Point2d_t.hpp"
 #include "Point3d_t.hpp"
 #include "Point3d_t.hpp"
@@ -23,6 +24,8 @@ class Landmark_t
         int32_t    landmark_id;
 
         int32_t    drone_id;
+
+        Time_t     timestamp;
 
         int32_t    camera_index;
 
@@ -143,6 +146,9 @@ int Landmark_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = this->timestamp._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -180,6 +186,9 @@ int Landmark_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = this->timestamp._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -210,6 +219,7 @@ int Landmark_t::_getEncodedSizeNoHash() const
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += this->timestamp._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += this->pt2d._getEncodedSizeNoHash();
@@ -228,7 +238,8 @@ uint64_t Landmark_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, Landmark_t::getHash };
 
-    uint64_t hash = 0x47b127eed7e09438LL +
+    uint64_t hash = 0xe40495d2b23e49a3LL +
+         Time_t::_computeHash(&cp) +
          Point2d_t::_computeHash(&cp) +
          Point3d_t::_computeHash(&cp) +
          Point3d_t::_computeHash(&cp) +

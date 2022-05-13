@@ -38,6 +38,7 @@ struct Landmark_t {
     int32_t frame_id;
     int32_t landmark_id;
     int32_t drone_id;
+    Time_t timestamp;
     int32_t camera_index;
     int32_t flag;
     Point2d_t pt2d;
