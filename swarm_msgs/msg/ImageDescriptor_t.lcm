@@ -19,6 +19,13 @@ struct Time_t {
     int32_t nsec;
 }
 
+struct IMUData_t {
+    Time_t timestamp;
+    double dt;
+    Point3d_t acc;
+    Point3d_t gyro;
+}
+
 struct ImageDescriptorHeader_t {
     Time_t  timestamp;
     int32_t drone_id;
@@ -109,6 +116,10 @@ struct ImageArrayDescriptor_t {
     Pose_t pose_drone;
     boolean is_keyframe;
     ImageDescriptor_t images[image_num];
+    int32_t imu_buf_size;
+    IMUData_t imu_buf[imu_buf_size];
+    Point3d_t Ba;
+    Point3d_t Bg;
 }
 
 struct LoopEdge_t {

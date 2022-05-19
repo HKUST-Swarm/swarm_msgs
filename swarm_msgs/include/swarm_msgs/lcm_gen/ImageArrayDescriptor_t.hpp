@@ -13,6 +13,9 @@
 #include "Time_t.hpp"
 #include "Pose_t.hpp"
 #include "ImageDescriptor_t.hpp"
+#include "IMUData_t.hpp"
+#include "Point3d_t.hpp"
+#include "Point3d_t.hpp"
 
 
 class ImageArrayDescriptor_t
@@ -37,6 +40,14 @@ class ImageArrayDescriptor_t
         int8_t     is_keyframe;
 
         std::vector< ImageDescriptor_t > images;
+
+        int32_t    imu_buf_size;
+
+        std::vector< IMUData_t > imu_buf;
+
+        Point3d_t  Ba;
+
+        Point3d_t  Bg;
 
     public:
         /**
@@ -166,6 +177,20 @@ int ImageArrayDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) con
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->imu_buf_size, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    for (int a0 = 0; a0 < this->imu_buf_size; a0++) {
+        tlen = this->imu_buf[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    tlen = this->Ba._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->Bg._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -210,6 +235,25 @@ int ImageArrayDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxle
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->imu_buf_size, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    try {
+        this->imu_buf.resize(this->imu_buf_size);
+    } catch (...) {
+        return -1;
+    }
+    for (int a0 = 0; a0 < this->imu_buf_size; a0++) {
+        tlen = this->imu_buf[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    tlen = this->Ba._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->Bg._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -228,6 +272,12 @@ int ImageArrayDescriptor_t::_getEncodedSizeNoHash() const
     for (int a0 = 0; a0 < this->image_num; a0++) {
         enc_size += this->images[a0]._getEncodedSizeNoHash();
     }
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
+    for (int a0 = 0; a0 < this->imu_buf_size; a0++) {
+        enc_size += this->imu_buf[a0]._getEncodedSizeNoHash();
+    }
+    enc_size += this->Ba._getEncodedSizeNoHash();
+    enc_size += this->Bg._getEncodedSizeNoHash();
     return enc_size;
 }
 
@@ -239,10 +289,13 @@ uint64_t ImageArrayDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageArrayDescriptor_t::getHash };
 
-    uint64_t hash = 0xabb52f2f94665f37LL +
+    uint64_t hash = 0xdb04f3ae24f64aafLL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
-         ImageDescriptor_t::_computeHash(&cp);
+         ImageDescriptor_t::_computeHash(&cp) +
+         IMUData_t::_computeHash(&cp) +
+         Point3d_t::_computeHash(&cp) +
+         Point3d_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
 }
