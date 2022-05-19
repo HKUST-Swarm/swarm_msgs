@@ -2,6 +2,7 @@ Header header
 int32 drone_id
 int32 camera_index
 int32 camera_id
+int32 frame_id
 
 float32[] landmark_descriptor
 

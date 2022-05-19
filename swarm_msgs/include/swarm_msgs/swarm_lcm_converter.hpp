@@ -344,6 +344,7 @@ inline TsType hash_stamp_drone_id(Time_t stamp, int drone_id) {
 
 inline ImageDescriptor_t generate_null_img_desc() {
     ImageDescriptor_t empty;
+    empty.frame_id = -1;
     empty.landmark_num = 0;
     empty.landmark_descriptor_size = 0;
     empty.image_desc_size = 0;

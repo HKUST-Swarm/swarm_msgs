@@ -20,6 +20,8 @@ class ImageArrayDescriptor_t
     public:
         int64_t    msg_id;
 
+        int64_t    frame_id;
+
         int32_t    image_num;
 
         int8_t     prevent_adding_db;
@@ -31,6 +33,8 @@ class ImageArrayDescriptor_t
         Time_t     timestamp;
 
         Pose_t     pose_drone;
+
+        int8_t     is_keyframe;
 
         std::vector< ImageDescriptor_t > images;
 
@@ -133,6 +137,9 @@ int ImageArrayDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) con
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -151,6 +158,9 @@ int ImageArrayDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) con
     tlen = this->pose_drone._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->is_keyframe, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     for (int a0 = 0; a0 < this->image_num; a0++) {
         tlen = this->images[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
         if(tlen < 0) return tlen; else pos += tlen;
@@ -164,6 +174,9 @@ int ImageArrayDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxle
     int pos = 0, tlen;
 
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_num, 1);
@@ -184,6 +197,9 @@ int ImageArrayDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxle
     tlen = this->pose_drone._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->is_keyframe, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     try {
         this->images.resize(this->image_num);
     } catch (...) {
@@ -201,12 +217,14 @@ int ImageArrayDescriptor_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
     enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += this->timestamp._getEncodedSizeNoHash();
     enc_size += this->pose_drone._getEncodedSizeNoHash();
+    enc_size += __boolean_encoded_array_size(NULL, 1);
     for (int a0 = 0; a0 < this->image_num; a0++) {
         enc_size += this->images[a0]._getEncodedSizeNoHash();
     }
@@ -221,7 +239,7 @@ uint64_t ImageArrayDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageArrayDescriptor_t::getHash };
 
-    uint64_t hash = 0xc8fbe317ad8fb724LL +
+    uint64_t hash = 0xabb52f2f94665f37LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          ImageDescriptor_t::_computeHash(&cp);
