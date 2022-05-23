@@ -166,3 +166,10 @@ struct LoopInliers_t {
     int32_t inlier_id_size;
     int64_t inlier_ids[inlier_id_size];
 }
+
+struct SlidingWindow_t {
+    Time_t timestamp;
+    int32_t drone_id;
+    int32_t sld_win_len;
+    int64_t frame_ids[sld_win_len];
+}
