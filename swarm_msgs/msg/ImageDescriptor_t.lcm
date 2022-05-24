@@ -41,6 +41,13 @@ struct ImageDescriptorHeader_t {
     int32_t camera_index;
 }
 
+struct SlidingWindow_t {
+    Time_t timestamp;
+    int32_t drone_id;
+    int32_t sld_win_len;
+    int64_t frame_ids[sld_win_len];
+}
+
 struct Landmark_t {
     int32_t frame_id;
     int32_t landmark_id;
@@ -120,6 +127,7 @@ struct ImageArrayDescriptor_t {
     IMUData_t imu_buf[imu_buf_size];
     Point3d_t Ba;
     Point3d_t Bg;
+    SlidingWindow_t sld_win_status;
 }
 
 struct LoopEdge_t {
@@ -165,11 +173,4 @@ struct LoopInliers_t {
     
     int32_t inlier_id_size;
     int64_t inlier_ids[inlier_id_size];
-}
-
-struct SlidingWindow_t {
-    Time_t timestamp;
-    int32_t drone_id;
-    int32_t sld_win_len;
-    int64_t frame_ids[sld_win_len];
 }
