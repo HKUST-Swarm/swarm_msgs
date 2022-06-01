@@ -376,7 +376,7 @@ public:
         auto _rpy = rpy();
         char _ret[128] = {0};
         if (for_file) {
-            sprintf(_ret, "%3.4f %3.4f %3.4f %3.4f %3.4f %3.4f %3.4f",
+            sprintf(_ret, "%3.6f %3.6f %3.6f %3.6f %3.6f %3.6f %3.6f",
                position.x(), position.y(), position.z(),
                attitude.w(), attitude.x(), attitude.y(), attitude.z());
 
