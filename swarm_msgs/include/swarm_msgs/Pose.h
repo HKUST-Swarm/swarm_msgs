@@ -83,6 +83,21 @@ T wrap_angle(T angle) {
     return angle;
 }
 namespace Swarm {
+
+template <typename Derived>
+Quaternion<Derived> averageQuaterions(std::vector<Quaternion<Derived>> quats) {
+    Matrix<Derived, 4, 4> M = Matrix4d::Zero();
+    for (auto & q : quats) {
+       Vector4d v = q.coeffs(); 
+       M += v*v.transpose();
+    }
+    SelfAdjointEigenSolver<Matrix<Derived, 4, 4>> solver;
+    solver.compute(M);
+    Matrix<Derived, 4, 1> eigenvector = solver.eigenvectors().rightCols(1);
+    Quaternion<Derived> q(eigenvector(3), eigenvector(1), eigenvector(2), eigenvector(0));
+    return q;
+}
+
 class Pose {
 
     Vector3d position = Vector3d(0, 0, 0);
@@ -296,59 +311,6 @@ public:
         return Swarm::Pose(this->to_isometry().inverse());
     }
 
-    friend Pose operator*(Pose a, Pose b) {
-        Pose p;
-        // p.position = a.attitude*(b.position+ a.position);
-        p.position = a.attitude * b.position + a.position;
-        p.attitude = a.attitude * b.attitude;
-        p.update_yaw();
-
-        //        printf("Res manual");
-        //        p.print();
-        //
-        //        printf("Res eigen");
-        //        p.print();
-        return p;
-    }
-
-    friend Vector3d operator*(Pose a, Vector3d point) {
-        return a.attitude * point + a.position;
-    }
-
-    //A^-1B
-    static Pose DeltaPose(const Pose &a, const Pose &b, bool use_yaw_only = false) {
-        //Check this!!!
-        Pose p;
-        if (!use_yaw_only) {
-            p.position = a.attitude.inverse() * (b.position - a.position);
-            p.attitude = a.attitude.inverse() * b.attitude;
-            p.update_yaw();
-        } else {
-            /*
-            dpose[3] = wrap_angle(poseb[3] - posea[3]);
-            T tmp[3];
-            tmp[0] = poseb[0] - posea[0];
-            tmp[1] = poseb[1] - posea[1];
-            tmp[2] = poseb[2] - posea[2];
-
-            YawRotatePoint(-posea[3], tmp, dpose);*/
-            double dyaw = wrap_angle(b.yaw() - a.yaw());
-            Vector3d dp = b.position - a.position;
-            p.attitude = (Quaterniond)AngleAxisd(dyaw, Vector3d::UnitZ());
-
-            p._yaw = dyaw;
-            p.attitude_yaw_only = p.attitude;
-
-            p.position.x() = cos(-a.yaw()) * dp.x() - sin(-a.yaw()) * dp.y();
-            p.position.y() = sin(-a.yaw()) * dp.x() + cos(-a.yaw()) * dp.y();
-            p.position.z() = dp.z();
-
-            // p.position = AngleAxisd(-a.yaw(), Vector3d::UnitZ()) * dp;
-        }
-
-        return p;
-    }
-
     static double MahalanobisDistance(const Pose &a, const Pose &b, Eigen::Matrix6d cov) {
         return DeltaPose(a, b).MahalanobisNorm(cov);
     }
@@ -453,7 +415,82 @@ public:
         }
     }
 
+    Vector6d tangentSpace() const {
+        Vector6d ret;
+        ret.segment<3>(0) = pos();
+        if (attitude.w() > 0) {
+            ret.segment<3>(3)  =  2 * attitude.vec();
+        } else {
+            ret.segment<3>(3)  = - 2 * attitude.vec();
+        }
+        return ret;
+    }
+
     Pose() {}
+
+    
+    friend Pose operator*(Pose a, Pose b) {
+        Pose p;
+        // p.position = a.attitude*(b.position+ a.position);
+        p.position = a.attitude * b.position + a.position;
+        p.attitude = a.attitude * b.attitude;
+        p.update_yaw();
+
+        //        printf("Res manual");
+        //        p.print();
+        //
+        //        printf("Res eigen");
+        //        p.print();
+        return p;
+    }
+
+    friend Vector3d operator*(Pose a, Vector3d point) {
+        return a.attitude * point + a.position;
+    }
+
+    //A^-1B
+    static Pose DeltaPose(const Pose &a, const Pose &b, bool use_yaw_only = false) {
+        //Check this!!!
+        Pose p;
+        if (!use_yaw_only) {
+            p.position = a.attitude.inverse() * (b.position - a.position);
+            p.attitude = a.attitude.inverse() * b.attitude;
+            p.update_yaw();
+        } else {
+            /*
+            dpose[3] = wrap_angle(poseb[3] - posea[3]);
+            T tmp[3];
+            tmp[0] = poseb[0] - posea[0];
+            tmp[1] = poseb[1] - posea[1];
+            tmp[2] = poseb[2] - posea[2];
+
+            YawRotatePoint(-posea[3], tmp, dpose);*/
+            double dyaw = wrap_angle(b.yaw() - a.yaw());
+            Vector3d dp = b.position - a.position;
+            p.attitude = (Quaterniond)AngleAxisd(dyaw, Vector3d::UnitZ());
+
+            p._yaw = dyaw;
+            p.attitude_yaw_only = p.attitude;
+
+            p.position.x() = cos(-a.yaw()) * dp.x() - sin(-a.yaw()) * dp.y();
+            p.position.y() = sin(-a.yaw()) * dp.x() + cos(-a.yaw()) * dp.y();
+            p.position.z() = dp.z();
+
+            // p.position = AngleAxisd(-a.yaw(), Vector3d::UnitZ()) * dp;
+        }
+
+        return p;
+    }
+
+    static Pose averagePoses(const std::vector<Pose> & poses) {
+        Vector3d sum_pos = Vector3d::Zero();
+        std::vector<Quaterniond> quaternions;
+        for (auto & pose : poses) {
+            sum_pos += pose.position;
+            quaternions.emplace_back(pose.attitude);
+        }
+        return Pose(sum_pos / poses.size(), averageQuaterions(quaternions));
+    }
 };
 
 inline std::istream& operator>>(std::istream& input, Pose & pose) {
