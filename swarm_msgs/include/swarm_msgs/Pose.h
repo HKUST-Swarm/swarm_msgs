@@ -87,6 +87,9 @@ namespace Swarm {
 template <typename Derived>
 Quaternion<Derived> averageQuaterions(std::vector<Quaternion<Derived>> quats) {
     Matrix<Derived, 4, 4> M = Matrix4d::Zero();
+    if (quats.size() == 1) {
+        return quats[0];
+    }
     for (auto & q : quats) {
        Vector4d v = q.coeffs(); 
        M += v*v.transpose();
@@ -94,7 +97,7 @@ Quaternion<Derived> averageQuaterions(std::vector<Quaternion<Derived>> quats) {
     SelfAdjointEigenSolver<Matrix<Derived, 4, 4>> solver;
     solver.compute(M);
     Matrix<Derived, 4, 1> eigenvector = solver.eigenvectors().rightCols(1);
-    Quaternion<Derived> q(eigenvector(3), eigenvector(1), eigenvector(2), eigenvector(0));
+    Quaternion<Derived> q(eigenvector(3), eigenvector(0), eigenvector(1), eigenvector(2));
     return q;
 }
 
@@ -113,17 +116,6 @@ class Pose {
 public:
     static Pose Identity() {
         return Pose();
-    }
-
-    void to_vector(double ret[]) const {
-        ret[3] = attitude.x();
-        ret[4] = attitude.y();
-        ret[5] = attitude.z();
-        ret[6] = attitude.w();
-
-        ret[0] = position.x();
-        ret[1] = position.y();
-        ret[2] = position.z();
     }
 
     template <typename T>
@@ -481,7 +473,6 @@ public:
 
         return p;
     }
-
     static Pose averagePoses(const std::vector<Pose> & poses) {
         Vector3d sum_pos = Vector3d::Zero();
         std::vector<Quaterniond> quaternions;

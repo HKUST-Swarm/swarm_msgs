@@ -175,3 +175,23 @@ struct LoopInliers_t {
     int32_t inlier_id_size;
     int64_t inlier_ids[inlier_id_size];
 }
+
+struct DistributedVinsData_t {
+    Time_t timestamp;
+    int32_t drone_id;
+    int32_t sld_win_len;
+    int64_t frame_ids[sld_win_len];
+    Pose_t frame_poses[sld_win_len];
+    int32_t camera_num;
+    int64_t cam_ids[camera_num];
+    Pose_t extrinsic[camera_num];
+    int32_t remote_drone_num;
+    int64_t remote_drone_ids[remote_drone_num];
+    Pose_t relative_coordinates[remote_drone_num];
+}
+
+struct DistributedSync_t {
+    Time_t timestamp;
+    int32_t drone_id;
+    int32_t sync_signal;
+}

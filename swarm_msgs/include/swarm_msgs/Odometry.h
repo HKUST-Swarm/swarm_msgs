@@ -102,5 +102,13 @@ public:
         return pose_;
     }
 
+    friend Odometry operator*(Pose a, Odometry odom) {
+        Odometry ret;
+        ret.stamp = odom.stamp;
+        ret.pose_ = a * odom.pose_;
+        ret.velocity = a.att() * odom.velocity;
+        ret.angular_velocity = a.att() * odom.angular_velocity;
+        return ret;
+    }
 };
 }
