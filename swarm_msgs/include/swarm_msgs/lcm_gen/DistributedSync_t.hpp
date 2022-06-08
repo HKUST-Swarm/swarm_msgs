@@ -21,6 +21,8 @@ class DistributedSync_t
 
         int32_t    sync_signal;
 
+        int64_t    solver_token;
+
     public:
         /**
          * Encode a message into binary form.
@@ -126,6 +128,9 @@ int DistributedSync_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->sync_signal, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->solver_token, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -142,6 +147,9 @@ int DistributedSync_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->sync_signal, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->solver_token, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -151,6 +159,7 @@ int DistributedSync_t::_getEncodedSizeNoHash() const
     enc_size += this->timestamp._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
@@ -162,7 +171,7 @@ uint64_t DistributedSync_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, DistributedSync_t::getHash };
 
-    uint64_t hash = 0x9a9d11fedf075ebeLL +
+    uint64_t hash = 0x384b7d86de7f2b94LL +
          Time_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);

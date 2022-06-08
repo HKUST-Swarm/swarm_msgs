@@ -188,10 +188,13 @@ struct DistributedVinsData_t {
     int32_t remote_drone_num;
     int64_t remote_drone_ids[remote_drone_num];
     Pose_t relative_coordinates[remote_drone_num];
+    int64_t solver_token;
+    int32_t iteration_count;
 }
 
 struct DistributedSync_t {
     Time_t timestamp;
     int32_t drone_id;
     int32_t sync_signal;
+    int64_t solver_token;
 }
