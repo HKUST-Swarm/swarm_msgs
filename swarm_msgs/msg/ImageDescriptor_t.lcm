@@ -117,6 +117,7 @@ struct ImageArrayDescriptor_t {
     int64_t msg_id;
     int64_t frame_id;
     int32_t image_num;
+    int32_t reference_frame_id;
     boolean prevent_adding_db;
     int32_t landmark_num;
     int32_t drone_id;

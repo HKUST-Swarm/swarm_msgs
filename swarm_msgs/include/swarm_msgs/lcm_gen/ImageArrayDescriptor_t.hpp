@@ -28,6 +28,8 @@ class ImageArrayDescriptor_t
 
         int32_t    image_num;
 
+        int32_t    reference_frame_id;
+
         int8_t     prevent_adding_db;
 
         int32_t    landmark_num;
@@ -157,6 +159,9 @@ int ImageArrayDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) con
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->reference_frame_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->prevent_adding_db, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -211,6 +216,9 @@ int ImageArrayDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxle
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_num, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->reference_frame_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->prevent_adding_db, 1);
@@ -272,6 +280,7 @@ int ImageArrayDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
@@ -299,7 +308,7 @@ uint64_t ImageArrayDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageArrayDescriptor_t::getHash };
 
-    uint64_t hash = 0xe74434924a513398LL +
+    uint64_t hash = 0x88ed0f2932061385LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          ImageDescriptor_t::_computeHash(&cp) +

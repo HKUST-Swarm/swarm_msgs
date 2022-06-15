@@ -102,6 +102,12 @@ public:
         return pose_;
     }
 
+    void moveByPose(const Pose & delta_pose) {
+        pose_ = delta_pose * pose_;
+        velocity = delta_pose.att() * velocity;
+        angular_velocity = delta_pose.att() * angular_velocity;
+    }
+
     friend Odometry operator*(Pose a, Odometry odom) {
         Odometry ret;
         ret.stamp = odom.stamp;
