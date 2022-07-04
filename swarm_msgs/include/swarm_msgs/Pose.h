@@ -101,6 +101,21 @@ Quaternion<Derived> averageQuaterions(std::vector<Quaternion<Derived>> quats) {
     return q;
 }
 
+template <typename Derived>
+Eigen::Quaternion<typename Derived::Scalar> deltaQ(const Eigen::MatrixBase<Derived> &theta)
+{
+    typedef typename Derived::Scalar Scalar_t;
+
+    Eigen::Quaternion<Scalar_t> dq;
+    Eigen::Matrix<Scalar_t, 3, 1> half_theta = theta;
+    half_theta /= static_cast<Scalar_t>(2.0);
+    dq.w() = static_cast<Scalar_t>(1.0);
+    dq.x() = half_theta.x();
+    dq.y() = half_theta.y();
+    dq.z() = half_theta.z();
+    return dq;
+}
+
 class Pose {
 
     Vector3d position = Vector3d(0, 0, 0);
@@ -181,10 +196,6 @@ public:
         update_yaw();
     }
 
-    Isometry3d to_isometry() const {
-        Isometry3d a = Translation3d(position) * attitude;
-        return a;
-    }
 
     Pose(geometry_msgs::Point pos, double yaw) {
         this->attitude = AngleAxisd(yaw, Vector3d::UnitZ());
@@ -195,8 +206,6 @@ public:
 
         update_yaw();
     }
-
-
 
     Pose(geometry_msgs::Point pos, geometry_msgs::Quaternion orientation) {
         position.x() = pos.x;
@@ -211,8 +220,6 @@ public:
 
         update_yaw();
     }
-
-
 
     Pose(Vector3d pos, double yaw) {
         this->attitude = AngleAxisd(yaw, Vector3d::UnitZ());
@@ -257,7 +264,6 @@ public:
         update_yaw();
     }
 
-
     Pose(const double v[], bool xyzyaw = false) {
         if (xyzyaw) {
             this->attitude = AngleAxisd(v[3], Vector3d::UnitZ());
@@ -271,8 +277,17 @@ public:
         position.y() = v[1];
         position.z() = v[2];
         attitude.normalize();
-
         update_yaw();
+    }
+
+    Pose(const VectorXd & state, bool xyzyaw=false) {
+        if (xyzyaw) {
+            assert(state.size() == 4 && "When input as xyzyaw, state must be 4-dim");
+            this->from_vector(state.data(), true);
+        } else {
+            assert(state.size() == 7 && "When input as full pose, state must be 7-dim");
+            this->from_vector(state.data(), false);
+        }
     }
 
     Pose(const Pose_t & pose_t) {
@@ -285,6 +300,12 @@ public:
         position.y() = pose_t.position[1];
         position.z() = pose_t.position[2];
         update_yaw();
+    }
+
+
+    Isometry3d to_isometry() const {
+        Isometry3d a = Translation3d(position) * attitude;
+        return a;
     }
 
     geometry_msgs::Pose to_ros_pose() const {
@@ -418,8 +439,16 @@ public:
         return ret;
     }
 
-    Pose() {}
+    static Pose fromTangentSpace(const Vector6d &v) {
+        Pose ret;
+        ret.position = v.segment<3>(0);
+        ret.attitude = deltaQ(v.segment<3>(3));
+        ret.attitude.normalize();
+        ret.update_yaw();
+        return ret;
+    }
 
+    Pose() {}
     
     friend Pose operator*(Pose a, Pose b) {
         Pose p;
