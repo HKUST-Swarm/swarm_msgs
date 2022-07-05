@@ -11,7 +11,8 @@
 #include "lcm_gen/ImageDescriptorHeader_t.hpp"
 #include <swarm_msgs/ImageArrayDescriptor.h>
 #include <swarm_msgs/ImageDescriptor.h>
-#include <swarm_msgs/swarm_types.hpp>
+#include "base_types.hpp"
+using Swarm::TsType;
 
 inline Pose_t fromROSPose(const geometry_msgs::Pose & pose) {
     Pose_t t;
