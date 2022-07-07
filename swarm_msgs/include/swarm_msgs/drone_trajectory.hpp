@@ -51,11 +51,11 @@ public:
         return trajectory.back();
     }
 
-    void push(ros::Time stamp, const Swarm::Pose & pose, FrameIdType frame_id = 0) {
-        push(stamp.toSec(), pose, frame_id);
+    const std::vector<Swarm::Pose> & get_trajectory() const {
+        return trajectory;
     }
-    
-    void push(double stamp, const Swarm::Pose & pose, FrameIdType frame_id = 0) {
+
+    void push(ros::Time stamp, const Swarm::Pose & pose, FrameIdType frame_id = 0) {
         if (cul_length.size() == 0) {
             cul_length.push_back(0);
         } else {
@@ -64,11 +64,11 @@ public:
             cul_length.push_back(dpose.pos().norm()+cul_length.back());
         }
 
-        TsType ts = stamp * 1e9;
+        TsType ts = stamp.toNSec();
         trajectory.push_back(pose);
         ts_trajectory.push_back(ts);
         frame_ids.push_back(frame_id);
-        stamp_trajectory.push_back(stamp);
+        stamp_trajectory.push_back(stamp.toSec());
         ts2index[ts] = ts_trajectory.size() - 1;
 
         geometry_msgs::PoseStamped _pose_stamped;
@@ -78,6 +78,10 @@ public:
         _pose_stamped.pose = pose.to_ros_pose();
         ros_path.poses.push_back(_pose_stamped);
         traj_points++;
+    }
+    
+    void push(double stamp, const Swarm::Pose & pose, FrameIdType frame_id = 0) {
+        push(ros::Time(stamp), pose, frame_id);
     }
 
     int trajectory_size() const {
@@ -169,6 +173,9 @@ public:
         return ts_trajectory.at(_index);
     }
 
+    double stamp_by_index(int _index) const {
+        return stamp_trajectory.at(_index);
+    }
 
     double trajectory_length_by_appro_ts(TsType tsa, TsType tsb) const {
         if (ts2index.find(tsa) != ts2index.end() && ts2index.find(tsb) != ts2index.end()) {

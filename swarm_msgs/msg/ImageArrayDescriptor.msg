@@ -1,8 +1,9 @@
 Header header
 bool prevent_adding_db
+bool is_keyframe
 int32 landmark_num
 int32 drone_id
 int32 reference_frame_id
-int64 msg_id
+int64 frame_id
 geometry_msgs/Pose pose_drone
 ImageDescriptor[] images
