@@ -2,6 +2,7 @@
 #include "Pose.h"
 #include "utils.hpp"
 #include <nav_msgs/Path.h>
+#include <swarm_msgs/DroneTraj.h>
 
 namespace Swarm {
 class DroneTrajectory {
@@ -250,6 +251,22 @@ public:
 
     const nav_msgs::Path & get_ros_path() const {
         return ros_path;
+    }
+
+    const swarm_msgs::DroneTraj toRos() const {
+        swarm_msgs::DroneTraj traj;
+        traj.header.stamp = ros::Time::now();
+        traj.header.frame_id = "map";
+        traj.poses.resize(trajectory.size());
+        traj.frame_stamps.resize(trajectory.size());
+        traj.frame_ids.resize(trajectory.size());
+        traj.drone_id = drone_id;
+        for (int i = 0; i < trajectory.size(); i++) {
+            traj.poses[i] = trajectory[i].to_ros_pose();
+            traj.frame_stamps[i] = ros::Time(stamp_trajectory[i]);
+            traj.frame_ids[i] = frame_ids[i];
+        }
+        return traj;
     }
 };
 }
