@@ -35,6 +35,7 @@ add_message_files(
         LoopEdges.msg
         Landmark.msg
         DroneTraj.msg
+        VIOFrame.msg
         ImageArrayDescriptor.msg
 )
 
