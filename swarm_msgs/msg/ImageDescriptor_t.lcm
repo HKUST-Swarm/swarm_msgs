@@ -199,3 +199,15 @@ struct DistributedSync_t {
     int32_t sync_signal;
     int64_t solver_token;
 }
+
+struct DistributedPGOData_t {
+    Time_t timestamp;
+    int32_t drone_id;
+    int32_t target_id;
+    int32_t reference_frame_id;
+    int32_t frame_num;
+    int64_t frame_ids[frame_num];
+    Pose_t frame_poses[frame_num];
+    int64_t solver_token;
+    int32_t iteration_count;
+}
