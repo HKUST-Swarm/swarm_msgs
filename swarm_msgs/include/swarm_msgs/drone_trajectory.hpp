@@ -76,7 +76,7 @@ public:
         _pose_stamped.header.stamp = ros::Time(stamp);
         _pose_stamped.header.frame_id = frame_id;
         ros_path.header.stamp = _pose_stamped.header.stamp;
-        _pose_stamped.pose = pose.to_ros_pose();
+        _pose_stamped.pose = pose.toROS();
         ros_path.poses.push_back(_pose_stamped);
         traj_points++;
     }
@@ -262,7 +262,7 @@ public:
         traj.frame_ids.resize(trajectory.size());
         traj.drone_id = drone_id;
         for (int i = 0; i < trajectory.size(); i++) {
-            traj.poses[i] = trajectory[i].to_ros_pose();
+            traj.poses[i] = trajectory[i].toROS();
             traj.frame_stamps[i] = ros::Time(stamp_trajectory[i]);
             traj.frame_ids[i] = frame_ids[i];
         }

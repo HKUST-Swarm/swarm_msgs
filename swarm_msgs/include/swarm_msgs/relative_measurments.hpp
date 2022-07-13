@@ -141,10 +141,10 @@ public:
         loc.keyframe_id_a = keyframe_id_a;
         loc.keyframe_id_b = keyframe_id_b;
 
-        loc.relative_pose = relative_pose.to_ros_pose();
+        loc.relative_pose = relative_pose.toROS();
 
-        loc.self_pose_a = self_pose_a.to_ros_pose();
-        loc.self_pose_b = self_pose_b.to_ros_pose();
+        loc.self_pose_a = self_pose_a.toROS();
+        loc.self_pose_b = self_pose_b.toROS();
         return loc;
     }
 

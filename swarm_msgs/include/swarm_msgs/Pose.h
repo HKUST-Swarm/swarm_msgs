@@ -303,12 +303,12 @@ public:
     }
 
 
-    Isometry3d to_isometry() const {
+    Isometry3d toIsometry() const {
         Isometry3d a = Translation3d(position) * attitude;
         return a;
     }
 
-    geometry_msgs::Pose to_ros_pose() const {
+    geometry_msgs::Pose toROS() const {
         geometry_msgs::Pose pose;
         pose.orientation.w = attitude.w();
         pose.orientation.x = attitude.x();
@@ -320,8 +320,20 @@ public:
         return pose;
     }
 
+    Pose_t toLCM() const {
+        Pose_t pose;
+        pose.position[0] = position.x();
+        pose.position[1] = position.y();
+        pose.position[2] = position.z();
+        pose.orientation[0] = attitude.x();
+        pose.orientation[1] = attitude.y();
+        pose.orientation[2] = attitude.z();
+        pose.orientation[3] = attitude.w();
+        return pose;
+    }
+
     Swarm::Pose inverse() const {
-        return Swarm::Pose(this->to_isometry().inverse());
+        return Swarm::Pose(this->toIsometry().inverse());
     }
 
     static double MahalanobisDistance(const Pose &a, const Pose &b, Eigen::Matrix6d cov) {

@@ -51,7 +51,7 @@ public:
         nav_msgs::Odometry odom;
         odom.header.stamp = ros::Time(stamp);
         odom.header.frame_id = "world";
-        odom.pose.pose = pose_.to_ros_pose();
+        odom.pose.pose = pose_.toROS();
         odom.twist.twist.linear.x = velocity.x();
         odom.twist.twist.linear.y = velocity.y();
         odom.twist.twist.linear.z = velocity.z();
