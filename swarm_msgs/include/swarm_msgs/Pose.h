@@ -280,13 +280,13 @@ public:
         update_yaw();
     }
 
-    Pose(const VectorXd & state, bool xyzyaw=false) {
-        if (xyzyaw) {
-            assert(state.size() == 4 && "When input as xyzyaw, state must be 4-dim");
+    Pose(const VectorXd & state) {
+        if (state.size() == 4 ) {
             this->from_vector(state.data(), true);
-        } else {
-            assert(state.size() == 7 && "When input as full pose, state must be 7-dim");
+        } else if (state.size() == 7) {
             this->from_vector(state.data(), false);
+        } else {
+            assert(false && "Pose::Pose(VectorXd) size error");
         }
     }
 

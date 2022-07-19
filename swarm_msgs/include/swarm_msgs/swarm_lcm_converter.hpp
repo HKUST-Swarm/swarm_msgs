@@ -27,19 +27,6 @@ inline Pose_t fromROSPose(const geometry_msgs::Pose & pose) {
     return t;
 }
 
-inline Pose_t fromPose(const Swarm::Pose & pose) {
-    Pose_t t;
-    t.orientation[0] = pose.att().x();
-    t.orientation[1] = pose.att().y();
-    t.orientation[2] = pose.att().z();
-    t.orientation[3] = pose.att().w();
-
-    t.position[0] = pose.pos().x();
-    t.position[1] = pose.pos().y();
-    t.position[2] = pose.pos().z();
-    return t;
-}
-
 inline geometry_msgs::Pose toROSPose(const Pose_t & t) {
     geometry_msgs::Pose pose;
     pose.orientation.x = t.orientation[0];
@@ -52,7 +39,6 @@ inline geometry_msgs::Pose toROSPose(const Pose_t & t) {
     pose.position.z = t.position[2];
     return pose;
 }
-
 
 inline geometry_msgs::Pose toROSPose(const Swarm::Pose & t) {
     return t.toROS();
