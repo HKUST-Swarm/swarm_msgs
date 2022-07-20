@@ -2,6 +2,8 @@
 #include "base_types.hpp"
 #include <swarm_msgs/node_detected.h>
 #include <swarm_msgs/node_detected_xyzyaw.h>
+#include <swarm_msgs/LoopEdge.h>
+#include "utils.hpp"
 
 namespace Swarm {
 typedef std::tuple<TsType, TsType, int, int> GeneralMeasurement2DronesKey;
@@ -130,7 +132,7 @@ public:
         set_covariance(cov);
     }
 
-    swarm_msgs::LoopEdge toros() const {
+    swarm_msgs::LoopEdge toROS() const {
         swarm_msgs::LoopEdge loc;
         loc.id = id;
         loc.drone_id_a = id_a;

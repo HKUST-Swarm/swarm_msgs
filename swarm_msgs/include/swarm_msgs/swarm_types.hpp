@@ -15,6 +15,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+#include "base_types.hpp"
 
 #define UNIDENTIFIED_MIN_ID 1000
 #define NO_ANNETAPOS
