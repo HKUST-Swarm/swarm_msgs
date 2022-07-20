@@ -1,3 +1,4 @@
+#pragma once
 #include "Pose.h"
 #include "base_types.hpp"
 #include <swarm_msgs/node_detected.h>
