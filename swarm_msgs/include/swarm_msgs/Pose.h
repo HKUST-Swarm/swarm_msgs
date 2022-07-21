@@ -123,12 +123,13 @@ class Pose {
     Quaterniond attitude_yaw_only = Quaterniond(1, 0, 0, 0);
     double _yaw = 0;
 
+public:
+
     void update_yaw() {
         _yaw = wrap_angle(this->rpy().z());
         attitude_yaw_only = (Quaterniond)AngleAxisd(_yaw, Vector3d::UnitZ());
     }
 
-public:
     static Pose Identity() {
         return Pose();
     }
@@ -529,6 +530,7 @@ inline std::istream& operator>>(std::istream& input, Pose & pose) {
   input >> pose.pos().x() >> pose.pos().y() >> pose.pos().z() >> pose.att().x() >> pose.att().y() >>
         pose.att().z() >> pose.att().w();
   pose.att().normalize();
+  pose.update_yaw();
   return input;
 }
 
