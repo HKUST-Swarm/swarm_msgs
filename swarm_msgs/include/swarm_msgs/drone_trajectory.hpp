@@ -3,6 +3,8 @@
 #include "utils.hpp"
 #include <nav_msgs/Path.h>
 #include <swarm_msgs/DroneTraj.h>
+#include "base_types.hpp"
+#include <ros/ros.h>
 
 namespace Swarm {
 class DroneTrajectory {
