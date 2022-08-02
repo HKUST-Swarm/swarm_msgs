@@ -73,6 +73,7 @@ public:
         frame_ids.push_back(frame_id);
         stamp_trajectory.push_back(stamp.toSec());
         ts2index[ts] = ts_trajectory.size() - 1;
+        id2index[frame_id] = frame_ids.size() - 1;
 
         geometry_msgs::PoseStamped _pose_stamped;
         _pose_stamped.header.stamp = ros::Time(stamp);
@@ -115,6 +116,30 @@ public:
         auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb), pose_4d);
         // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.toStr().c_str());
         return std::make_pair(rp, covariance_between_ts(tsa, tsb));
+    }
+
+
+    std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_frame_id(FrameIdType frame_id_a, FrameIdType frame_id_b, bool pose_4d=false) const {
+        if (id2index.find(frame_id_a) == id2index.end()) {
+            ROS_ERROR("get_relative_pose_by_frame_id %ld-%ld failed. tsa not found", frame_id_a, frame_id_b);
+            assert(false && "frame_id_a not found. Use get_relative_pose_by_appro_ts instead");
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
+        }
+
+        if (id2index.find(frame_id_a) == id2index.end()) {
+            ROS_ERROR("get_relative_pose_by_frame_id %ld-%ld failed. tsb not found", frame_id_a, frame_id_b);
+            assert(false && "frame_id_b not found. Use get_relative_pose_by_appro_ts instead");
+            return std::make_pair(Swarm::Pose(), Eigen::Matrix6d());
+        }
+
+
+        auto indexa = id2index.at(frame_id_a);
+        auto indexb = id2index.at(frame_id_b);
+
+        auto rp = Swarm::Pose::DeltaPose(get_pose(indexa), get_pose(indexb), pose_4d);
+        double len = fabs(cul_length[indexb] - cul_length[indexa]);
+        // ROS_WARN("trajectory_length_by_ts %ld-%ld index %ld<->%ld, RP %s", tsa, tsb, indexa, indexb, rp.toStr().c_str());
+        return std::make_pair(rp, covariance_with_length(len));
     }
     
     std::pair<Swarm::Pose, Eigen::Matrix6d> get_relative_pose_by_appro_ts(TsType tsa, TsType tsb, bool pose_4d=false) const {
@@ -229,6 +254,16 @@ public:
         auto indexb = id2index.at(idb);
 
         return fabs(cul_length[indexb] - cul_length[indexa]);
+    }
+
+    //Ang Pos
+    Eigen::Matrix6d covariance_with_length(double len) const {
+        Eigen::Matrix6d cov_mat = Eigen::Matrix6d::Zero();
+        cov_mat.block<3, 3>(0, 0) = Matrix3d::Identity()*pos_covariance_per_meter*len 
+            + 0.5*Matrix3d::Identity()*yaw_covariance_per_meter*len*len;;
+        cov_mat.block<3, 3>(3, 3) = Matrix3d::Identity()*yaw_covariance_per_meter*len;
+        // std::cout << "length " << len << "Cov\n" << cov_mat << std::endl;
+        return cov_mat;
     }
 
     //Ang Pos
