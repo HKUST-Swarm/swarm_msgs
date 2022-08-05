@@ -90,6 +90,9 @@ struct ImageDescriptor_t {
     int32_t landmark_descriptor_size;
     float landmark_descriptor[landmark_descriptor_size];
 
+    int32_t landmark_scores_size;
+    float landmark_scores[landmark_scores_size];
+
     int32_t image_desc_size;
     float image_desc[image_desc_size];
 

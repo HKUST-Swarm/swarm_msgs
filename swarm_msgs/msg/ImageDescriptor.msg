@@ -5,6 +5,7 @@ int32 camera_id
 int32 frame_id
 
 float32[] landmark_descriptor
+float32[] landmark_scores
 
 geometry_msgs/Pose pose_drone
 geometry_msgs/Pose camera_extrinsic
