@@ -203,6 +203,11 @@ struct DistributedSync_t {
     int64_t solver_token;
 }
 
+struct Vector_t {
+    int32_t size;
+    double data[size];
+}
+
 struct DistributedPGOData_t {
     Time_t timestamp;
     int32_t drone_id;
@@ -211,6 +216,7 @@ struct DistributedPGOData_t {
     int32_t frame_num;
     int64_t frame_ids[frame_num];
     Pose_t frame_poses[frame_num];
+    Vector_t frame_duals[frame_num];
     int64_t solver_token;
     int32_t iteration_count;
 }

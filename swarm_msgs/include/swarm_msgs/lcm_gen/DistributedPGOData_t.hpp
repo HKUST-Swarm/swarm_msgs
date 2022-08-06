@@ -12,6 +12,7 @@
 #include <vector>
 #include "Time_t.hpp"
 #include "Pose_t.hpp"
+#include "Vector_t.hpp"
 
 
 class DistributedPGOData_t
@@ -30,6 +31,8 @@ class DistributedPGOData_t
         std::vector< int64_t > frame_ids;
 
         std::vector< Pose_t > frame_poses;
+
+        std::vector< Vector_t > frame_duals;
 
         int64_t    solver_token;
 
@@ -156,6 +159,11 @@ int DistributedPGOData_t::_encodeNoHash(void *buf, int offset, int maxlen) const
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    for (int a0 = 0; a0 < this->frame_num; a0++) {
+        tlen = this->frame_duals[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->solver_token, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -200,6 +208,16 @@ int DistributedPGOData_t::_decodeNoHash(const void *buf, int offset, int maxlen)
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    try {
+        this->frame_duals.resize(this->frame_num);
+    } catch (...) {
+        return -1;
+    }
+    for (int a0 = 0; a0 < this->frame_num; a0++) {
+        tlen = this->frame_duals[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->solver_token, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -221,6 +239,9 @@ int DistributedPGOData_t::_getEncodedSizeNoHash() const
     for (int a0 = 0; a0 < this->frame_num; a0++) {
         enc_size += this->frame_poses[a0]._getEncodedSizeNoHash();
     }
+    for (int a0 = 0; a0 < this->frame_num; a0++) {
+        enc_size += this->frame_duals[a0]._getEncodedSizeNoHash();
+    }
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     return enc_size;
@@ -234,9 +255,10 @@ uint64_t DistributedPGOData_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, DistributedPGOData_t::getHash };
 
-    uint64_t hash = 0x72ffdbee1ad2a1a3LL +
+    uint64_t hash = 0xa69baf1374b2d101LL +
          Time_t::_computeHash(&cp) +
-         Pose_t::_computeHash(&cp);
+         Pose_t::_computeHash(&cp) +
+         Vector_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
 }

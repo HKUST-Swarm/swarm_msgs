@@ -4,5 +4,6 @@ int32 target_id
 int32 reference_frame_id
 int64[] frame_ids
 geometry_msgs/Pose[] frame_poses
+std_msgs/Float64MultiArray[] frame_duals
 int64 solver_token
 int32 iteration_count
