@@ -100,7 +100,7 @@ public:
         cov(4, 4) = loc.ang_cov.y;
         cov(5, 5) = loc.ang_cov.z;
         
-        set_covariance(cov);
+        setCovariance(cov);
     }
 
     LoopEdge(const swarm_msgs::node_detected & loc)  {
@@ -130,7 +130,7 @@ public:
         }
 
         const Eigen::Map<const Eigen::Matrix<double,6,6,RowMajor>> cov(loc.relative_pose.covariance.data());
-        set_covariance(cov);
+        setCovariance(cov);
     }
 
     swarm_msgs::LoopEdge toROS() const {
@@ -150,29 +150,6 @@ public:
         loc.self_pose_b = self_pose_b.toROS();
         return loc;
     }
-
-    //T, Q
-    Matrix6d get_covariance() const {
-        return cov_mat;
-    }
-
-    //T, Q
-    Matrix4d get_sqrt_information_4d() const {
-        Matrix4d _sqrt_inf = Matrix4d::Zero();
-        _sqrt_inf.block<3, 3>(0, 0) = sqrt_inf_mat.block<3, 3>(0, 0);
-        _sqrt_inf(3, 3) = sqrt_inf_mat(5, 5);
-        return _sqrt_inf;
-    }
-
-    void set_covariance(const Matrix6d & cov) {
-        cov_mat = cov;
-        inf_mat = cov.inverse();
-        sqrt_inf_mat = inf_mat.cwiseAbs().cwiseSqrt();
-        // std::cout << "cov_mat" << cov_mat << std::endl;
-        // std::cout << "inf_mat" << inf_mat << std::endl;
-        // std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
-    }
-
 
     LoopEdge(swarm_msgs::LoopEdge loc, Eigen::Matrix6d _inf_mat):
         inf_mat(_inf_mat)
@@ -217,39 +194,12 @@ public:
         // std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
     }
 
-    // LoopEdge(const LoopEdge &loc) {
-    //     id = loc.id;
-    //     id_a = loc.id_a;
-    //     id_b = loc.id_b;
-    //     ts_a = loc.ts_a;
-    //     ts_b = loc.ts_b;
-
-    //     stamp_a = loc.stamp_a;
-    //     stamp_b = loc.stamp_b;
-
-    //     keyframe_id_a = loc.keyframe_id_a;
-    //     keyframe_id_b = loc.keyframe_id_b;
-
-    //     relative_pose = loc.relative_pose;
-
-    //     self_pose_a = loc.self_pose_a;
-    //     self_pose_b = loc.self_pose_b;
-
-    //     has_information_matrix = loc.has_information_matrix;
-    //     cov_mat = loc.cov_mat;
-    //     sqrt_inf_mat = loc.sqrt_inf_mat;
-    //     inf_mat = loc.inf_mat;
-
-    //     measurement_type = loc.measurement_type;
-    //     res_count = loc.res_count;
-    // }
-    
     LoopEdge() {
         measurement_type = Loop;
         res_count = 0;
     }
 
-    LoopEdge invert_loop() const {
+    LoopEdge getInvertLoop() const {
         LoopEdge loop;
         //Invert loop is still treat as same id for debugging.
         loop.id = id;
@@ -269,7 +219,7 @@ public:
         loop.measurement_type = measurement_type;
         loop.res_count = res_count;
 
-        loop.set_covariance(cov_mat);
+        loop.setCovariance(cov_mat);
 
         loop.ts_a = ts_b;
         loop.ts_b = ts_a;
@@ -277,14 +227,35 @@ public:
         return loop;
     }
 
-    Eigen::Matrix6d information_matrix() const {
+    Eigen::Matrix6d getInfoMat() const {
         return inf_mat;
     }
 
-    Eigen::Matrix6d sqrt_information_matrix() const {
+    Eigen::Matrix6d getSqrtInfoMat() const {
         return sqrt_inf_mat;
     }
-    
+
+    //T, Q
+    Matrix6d getCovariance() const {
+        return cov_mat;
+    }
+
+    //T, Q
+    Matrix4d getSqrtInfoMat4D() const {
+        Matrix4d _sqrt_inf = Matrix4d::Zero();
+        _sqrt_inf.block<3, 3>(0, 0) = sqrt_inf_mat.block<3, 3>(0, 0);
+        _sqrt_inf(3, 3) = sqrt_inf_mat(5, 5);
+        return _sqrt_inf;
+    }
+
+    void setCovariance(const Matrix6d & cov) {
+        cov_mat = cov;
+        inf_mat = cov.inverse();
+        sqrt_inf_mat = inf_mat.cwiseAbs().cwiseSqrt();
+        // std::cout << "cov_mat" << cov_mat << std::endl;
+        // std::cout << "inf_mat" << inf_mat << std::endl;
+        // std::cout << "sqrt_inf_mat" << sqrt_inf_mat << std::endl;
+    }
 };
 
 class DroneDetection: public GeneralMeasurement2Drones {
@@ -299,7 +270,6 @@ public:
     bool enable_dpose = false;
     bool use_inv_dep;
     
-
     //If disable dpose, this will act the extrinsic
     Pose dpose_self_a;
     Pose dpose_self_b;
