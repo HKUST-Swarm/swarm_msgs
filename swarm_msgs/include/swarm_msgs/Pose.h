@@ -334,7 +334,7 @@ public:
     }
 
     Swarm::Pose inverse() const {
-        return Swarm::Pose(this->toIsometry().inverse());
+        return Swarm::Pose(attitude.inverse(), -(attitude.inverse() * position));
     }
 
     static double MahalanobisDistance(const Pose &a, const Pose &b, Eigen::Matrix6d cov) {

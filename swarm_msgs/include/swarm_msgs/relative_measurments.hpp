@@ -258,6 +258,51 @@ public:
     }
 };
 
+class PosePrior {
+    Swarm::Pose pose;
+    Matrix6d inf_mat;
+    Matrix6d sqrt_inf_mat;
+    Matrix3d rot_mat; //Note rot mat here is not essential SO(3) in Arock.
+public:
+    FrameIdType frame_id;
+    PosePrior(FrameIdType _frame_id, Swarm::Pose _pose, Eigen::Matrix6d _inf_mat=Matrix6d::Identity()):
+        frame_id(_frame_id),
+        pose(_pose),
+        inf_mat(_inf_mat)
+    {
+        sqrt_inf_mat = inf_mat.cwiseAbs().cwiseSqrt();
+        rot_mat = _pose.att().toRotationMatrix();
+    }
+
+    PosePrior(FrameIdType _frame_id, Matrix3d R, Matrix3d _inf_mat=Matrix3d::Identity()):
+        frame_id(_frame_id) {
+        inf_mat = Matrix6d::Identity();
+        sqrt_inf_mat.setIdentity();
+        inf_mat.block<3, 3>(3, 3) = _inf_mat;
+        rot_mat = R;
+    }
+
+    Matrix6d getInfoMat() const {
+        return inf_mat;
+    }
+
+    Matrix6d getSqrtInfoMat() const {
+        return sqrt_inf_mat;
+    }
+
+    Matrix3d getSqrtInfoMatRot() const {
+        return sqrt_inf_mat.block<3, 3>(3, 3);
+    }
+
+    Swarm::Pose getPose() const {
+        return pose;
+    }
+
+    Matrix3d getRotMat() const {
+        return rot_mat;
+    }
+};
+
 class DroneDetection: public GeneralMeasurement2Drones {
 
 public:
