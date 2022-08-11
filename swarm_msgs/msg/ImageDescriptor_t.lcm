@@ -213,10 +213,13 @@ struct DistributedPGOData_t {
     int32_t drone_id;
     int32_t target_id;
     int32_t reference_frame_id;
+    int32_t type;
     int32_t frame_num;
     int64_t frame_ids[frame_num];
-    Pose_t frame_poses[frame_num];
-    Vector_t frame_duals[frame_num];
+    int32_t frame_poses_num;
+    Pose_t frame_poses[frame_poses_num];
+    int32_t frame_dual_num;
+    Vector_t frame_duals[frame_dual_num];
     int64_t solver_token;
     int32_t iteration_count;
 }
