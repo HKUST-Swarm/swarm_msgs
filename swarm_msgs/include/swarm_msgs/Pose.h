@@ -402,6 +402,10 @@ public:
         return attitude;
     }
 
+    inline Matrix3d R() const {
+        return attitude.toRotationMatrix();
+    }
+
     inline void set_att(Quaterniond att) {
         attitude = att;
         update_yaw();

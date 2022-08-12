@@ -90,6 +90,10 @@ public:
         return pose_.pos();
     }
 
+    Matrix3d R() const {
+        return pose_.R();
+    }
+
     Vector3d vel() const {
         return velocity;
     }

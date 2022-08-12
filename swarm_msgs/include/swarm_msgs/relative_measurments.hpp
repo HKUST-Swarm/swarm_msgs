@@ -271,7 +271,7 @@ public:
         inf_mat(_inf_mat)
     {
         sqrt_inf_mat = inf_mat.cwiseAbs().cwiseSqrt();
-        rot_mat = _pose.att().toRotationMatrix();
+        rot_mat = _pose.R();
     }
 
     PosePrior(FrameIdType _frame_id, Matrix3d R, Matrix3d _inf_mat=Matrix3d::Identity()):
@@ -300,6 +300,10 @@ public:
 
     Matrix3d getRotMat() const {
         return rot_mat;
+    }
+
+    Vector3d T() const {
+        return pose.pos();
     }
 };
 
