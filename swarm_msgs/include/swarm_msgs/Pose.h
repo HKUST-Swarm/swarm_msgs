@@ -382,40 +382,40 @@ public:
         std::cout << toStr();
     }
 
-    inline Vector3d pos() const {
+    Vector3d pos() const {
         return position;
     }
 
-    inline Vector3d & pos() {
+    Vector3d & pos() {
         return position;
     }
 
-    inline Quaterniond att_yaw_only() const {
+    Quaterniond att_yaw_only() const {
         return attitude_yaw_only;
     }
 
-    inline Quaterniond att() const {
+    Quaterniond att() const {
         return attitude;
     }
 
-    inline Quaterniond & att() {
+    Quaterniond & att() {
         return attitude;
     }
 
-    inline Matrix3d R() const {
+    Matrix3d R() const {
         return attitude.toRotationMatrix();
     }
 
-    inline void set_att(Quaterniond att) {
+    void set_att(Quaterniond att) {
         attitude = att;
         update_yaw();
     }
 
-    inline void set_pos(Vector3d pos) {
+    void set_pos(Vector3d pos) {
         position = pos;
     }
 
-    inline void set_yaw_only() {
+    void set_yaw_only() {
         update_yaw();
         attitude = attitude_yaw_only;
     }
