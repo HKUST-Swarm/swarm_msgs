@@ -1,6 +1,7 @@
 #pragma once
 #include <swarm_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
 
 namespace Swarm {
 class Odometry {
@@ -60,6 +61,13 @@ public:
         odom.twist.twist.angular.y = angular_velocity.y();
         odom.twist.twist.angular.z = angular_velocity.z();
         return odom;
+    }
+
+    tf::Transform toTF() const {
+        tf::Transform tf;
+        tf.setOrigin(tf::Vector3(pos().x(), pos().y(), pos().z()));
+        tf.setRotation(tf::Quaternion(att().x(), att().y(), att().z(), att().w()));
+        return tf;
     }
 
     Quaterniond & att() {
