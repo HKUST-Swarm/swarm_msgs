@@ -16,14 +16,15 @@ import Pose_t
 import SlidingWindow_t
 
 class ImageDescriptorHeader_t(object):
-    __slots__ = ["timestamp", "drone_id", "reference_frame_id", "matched_frame", "matched_drone", "is_lazy_frame", "image_desc_size", "image_desc", "image_desc_size_int8", "image_desc_int8", "pose_drone", "camera_extrinsic", "prevent_adding_db", "is_keyframe", "msg_id", "frame_id", "feature_num", "camera_index", "camera_id", "cur_td", "sld_win_status"]
+    __slots__ = ["timestamp", "timestamp_sent", "drone_id", "reference_frame_id", "matched_frame", "matched_drone", "is_lazy_frame", "image_desc_size", "image_desc", "image_desc_size_int8", "image_desc_int8", "pose_drone", "camera_extrinsic", "prevent_adding_db", "is_keyframe", "msg_id", "frame_id", "feature_num", "camera_index", "camera_id", "cur_td", "sld_win_status"]
 
-    __typenames__ = ["Time_t", "int32_t", "int32_t", "int64_t", "int32_t", "boolean", "int32_t", "float", "int32_t", "int8_t", "Pose_t", "Pose_t", "boolean", "boolean", "int64_t", "int64_t", "int32_t", "int32_t", "int32_t", "float", "SlidingWindow_t"]
+    __typenames__ = ["Time_t", "Time_t", "int32_t", "int32_t", "int64_t", "int32_t", "boolean", "int32_t", "float", "int32_t", "int8_t", "Pose_t", "Pose_t", "boolean", "boolean", "int64_t", "int64_t", "int32_t", "int32_t", "int32_t", "float", "SlidingWindow_t"]
 
-    __dimensions__ = [None, None, None, None, None, None, None, ["image_desc_size"], None, ["image_desc_size_int8"], None, None, None, None, None, None, None, None, None, None, None]
+    __dimensions__ = [None, None, None, None, None, None, None, None, ["image_desc_size"], None, ["image_desc_size_int8"], None, None, None, None, None, None, None, None, None, None, None]
 
     def __init__(self):
         self.timestamp = Time_t()
+        self.timestamp_sent = Time_t()
         self.drone_id = 0
         self.reference_frame_id = 0
         self.matched_frame = 0
@@ -54,6 +55,8 @@ class ImageDescriptorHeader_t(object):
     def _encode_one(self, buf):
         assert self.timestamp._get_packed_fingerprint() == Time_t._get_packed_fingerprint()
         self.timestamp._encode_one(buf)
+        assert self.timestamp_sent._get_packed_fingerprint() == Time_t._get_packed_fingerprint()
+        self.timestamp_sent._encode_one(buf)
         buf.write(struct.pack(">iiqibi", self.drone_id, self.reference_frame_id, self.matched_frame, self.matched_drone, self.is_lazy_frame, self.image_desc_size))
         buf.write(struct.pack('>%df' % self.image_desc_size, *self.image_desc[:self.image_desc_size]))
         buf.write(struct.pack(">i", self.image_desc_size_int8))
@@ -79,6 +82,7 @@ class ImageDescriptorHeader_t(object):
     def _decode_one(buf):
         self = ImageDescriptorHeader_t()
         self.timestamp = Time_t._decode_one(buf)
+        self.timestamp_sent = Time_t._decode_one(buf)
         self.drone_id, self.reference_frame_id, self.matched_frame, self.matched_drone = struct.unpack(">iiqi", buf.read(20))
         self.is_lazy_frame = bool(struct.unpack('b', buf.read(1))[0])
         self.image_desc_size = struct.unpack(">i", buf.read(4))[0]
@@ -98,7 +102,7 @@ class ImageDescriptorHeader_t(object):
     def _get_hash_recursive(parents):
         if ImageDescriptorHeader_t in parents: return 0
         newparents = parents + [ImageDescriptorHeader_t]
-        tmphash = (0xabc4c00313a30915+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ SlidingWindow_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0xe2f50e681bae631d+ Time_t._get_hash_recursive(newparents)+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ SlidingWindow_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

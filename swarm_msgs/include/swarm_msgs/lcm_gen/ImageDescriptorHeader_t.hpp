@@ -11,6 +11,7 @@
 
 #include <vector>
 #include "Time_t.hpp"
+#include "Time_t.hpp"
 #include "Pose_t.hpp"
 #include "Pose_t.hpp"
 #include "SlidingWindow_t.hpp"
@@ -20,6 +21,8 @@ class ImageDescriptorHeader_t
 {
     public:
         Time_t     timestamp;
+
+        Time_t     timestamp_sent;
 
         int32_t    drone_id;
 
@@ -160,6 +163,9 @@ int ImageDescriptorHeader_t::_encodeNoHash(void *buf, int offset, int maxlen) co
     tlen = this->timestamp._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = this->timestamp_sent._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -232,6 +238,9 @@ int ImageDescriptorHeader_t::_decodeNoHash(const void *buf, int offset, int maxl
     int pos = 0, tlen;
 
     tlen = this->timestamp._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->timestamp_sent._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
@@ -307,6 +316,7 @@ int ImageDescriptorHeader_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
     enc_size += this->timestamp._getEncodedSizeNoHash();
+    enc_size += this->timestamp_sent._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
@@ -338,7 +348,8 @@ uint64_t ImageDescriptorHeader_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptorHeader_t::getHash };
 
-    uint64_t hash = 0xabc4c00313a30915LL +
+    uint64_t hash = 0xe2f50e681bae631dLL +
+         Time_t::_computeHash(&cp) +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

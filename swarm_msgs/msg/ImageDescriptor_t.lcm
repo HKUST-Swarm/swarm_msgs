@@ -85,6 +85,7 @@ struct LandmarkDescriptorPacket_t {
 
 struct ImageDescriptorHeader_t {
     Time_t  timestamp;
+    Time_t  timestamp_sent;
     int32_t drone_id;
     int32_t reference_frame_id;
     int64_t matched_frame;
