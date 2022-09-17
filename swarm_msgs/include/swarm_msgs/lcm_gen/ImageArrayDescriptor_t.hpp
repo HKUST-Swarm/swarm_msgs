@@ -36,6 +36,8 @@ class ImageArrayDescriptor_t
 
         int32_t    drone_id;
 
+        int32_t    is_lazy_frame;
+
         Time_t     timestamp;
 
         Pose_t     pose_drone;
@@ -171,6 +173,9 @@ int ImageArrayDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) con
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->is_lazy_frame, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = this->timestamp._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -230,6 +235,9 @@ int ImageArrayDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxle
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->is_lazy_frame, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = this->timestamp._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -284,6 +292,7 @@ int ImageArrayDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += this->timestamp._getEncodedSizeNoHash();
     enc_size += this->pose_drone._getEncodedSizeNoHash();
     enc_size += __boolean_encoded_array_size(NULL, 1);
@@ -308,7 +317,7 @@ uint64_t ImageArrayDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageArrayDescriptor_t::getHash };
 
-    uint64_t hash = 0x88ed0f2932061385LL +
+    uint64_t hash = 0x417ee5e5ec62f61aLL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          ImageDescriptor_t::_computeHash(&cp) +
