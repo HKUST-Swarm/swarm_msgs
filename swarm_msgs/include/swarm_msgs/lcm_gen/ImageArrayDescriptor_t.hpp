@@ -26,6 +26,10 @@ class ImageArrayDescriptor_t
 
         int64_t    frame_id;
 
+        int64_t    matched_frame;
+
+        int32_t    matched_drone;
+
         int32_t    image_num;
 
         int32_t    reference_frame_id;
@@ -158,6 +162,12 @@ int ImageArrayDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) con
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->matched_frame, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->matched_drone, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -218,6 +228,12 @@ int ImageArrayDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxle
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->matched_frame, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->matched_drone, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_num, 1);
@@ -287,6 +303,8 @@ int ImageArrayDescriptor_t::_getEncodedSizeNoHash() const
     int enc_size = 0;
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __boolean_encoded_array_size(NULL, 1);
@@ -317,7 +335,7 @@ uint64_t ImageArrayDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageArrayDescriptor_t::getHash };
 
-    uint64_t hash = 0x417ee5e5ec62f61aLL +
+    uint64_t hash = 0x020b5a35c049c7abLL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          ImageDescriptor_t::_computeHash(&cp) +
