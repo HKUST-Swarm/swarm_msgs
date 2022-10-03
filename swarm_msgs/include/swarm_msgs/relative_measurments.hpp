@@ -263,7 +263,9 @@ class PosePrior {
     Matrix6d inf_mat;
     Matrix6d sqrt_inf_mat;
     Matrix3d rot_mat; //Note rot mat here is not essential SO(3) in Arock.
+    Vector6d delta; // delta pose prior
 public:
+    bool is_prior_delta = false;
     FrameIdType frame_id;
     PosePrior(FrameIdType _frame_id, Swarm::Pose _pose, Eigen::Matrix6d _inf_mat=Matrix6d::Identity()):
         frame_id(_frame_id),
@@ -281,7 +283,20 @@ public:
         inf_mat.block<3, 3>(3, 3) = _inf_mat;
         rot_mat = R;
     }
+    
+    static PosePrior createFromDelta(FrameIdType _frame_id, Vector6d _delta, Matrix6d _inf_mat=Matrix6d::Identity()) {
+        PosePrior prior;
+        prior.frame_id = _frame_id;
+        prior.inf_mat = Matrix6d::Identity();
+        prior.sqrt_inf_mat.setIdentity();
+        prior.inf_mat = _inf_mat;
+        prior.delta = _delta;
+        prior.is_prior_delta = true;
+        return prior;
+    }
 
+    PosePrior() {}
+    
     Matrix6d getInfoMat() const {
         return inf_mat;
     }
@@ -302,8 +317,16 @@ public:
         return rot_mat;
     }
 
+    Vector6d getDelta6d() {
+        return delta;
+    }
+
     Vector3d T() const {
-        return pose.pos();
+        if (is_prior_delta) {
+            return delta.head<3>();
+        } else {
+            return pose.pos();
+        }
     }
 };
 
