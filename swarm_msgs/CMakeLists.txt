@@ -38,6 +38,7 @@ add_message_files(
         VIOFrame.msg
         ImageArrayDescriptor.msg
         DPGOData.msg
+        DPGOSignal.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
