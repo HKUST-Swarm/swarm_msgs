@@ -288,8 +288,8 @@ public:
         PosePrior prior;
         prior.frame_id = _frame_id;
         prior.inf_mat = Matrix6d::Identity();
-        prior.sqrt_inf_mat.setIdentity();
         prior.inf_mat = _inf_mat;
+        prior.sqrt_inf_mat = _inf_mat.cwiseAbs().cwiseSqrt();
         prior.delta = _delta;
         prior.is_prior_delta = true;
         return prior;
