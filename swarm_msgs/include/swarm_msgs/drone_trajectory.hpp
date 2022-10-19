@@ -54,6 +54,10 @@ public:
         return trajectory.back();
     }
 
+    double get_latest_stamp() const {
+        return stamp_trajectory.back();
+    }
+
     const std::vector<Swarm::Pose> & get_trajectory() const {
         return trajectory;
     }
@@ -89,7 +93,7 @@ public:
     }
 
     int trajectory_size() const {
-        return ts_trajectory.size();
+        return trajectory.size();
     }
 
     double trajectory_length() const {

@@ -1,4 +1,6 @@
 std_msgs/Header header
+int64 reference_frame_id
+int64 self_id
 uint32[] ids
 geometry_msgs/Point[] local_drone_position
 geometry_msgs/Vector3[] local_drone_velocity
