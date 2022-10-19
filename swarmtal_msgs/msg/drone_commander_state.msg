@@ -38,6 +38,7 @@ uint32 CTRL_MODE_HOVER=3
 uint32 CTRL_MODE_POSVEL=4
 uint32 CTRL_MODE_ATT=5
 uint32 CTRL_MODE_MISSION=6
+uint32 CTRL_MODE_ALT=7
 
 uint32 commander_ctrl_mode
 
