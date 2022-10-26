@@ -309,6 +309,13 @@ public:
         return a;
     }
 
+    Matrix4d toMatrix() const {
+        Matrix4d a = Matrix4d::Identity();
+        a.block<3,3>(0,0) = attitude.toRotationMatrix();
+        a.block<3,1>(0,3) = position;
+        return a;
+    }
+
     geometry_msgs::Pose toROS() const {
         geometry_msgs::Pose pose;
         pose.orientation.w = attitude.w();
