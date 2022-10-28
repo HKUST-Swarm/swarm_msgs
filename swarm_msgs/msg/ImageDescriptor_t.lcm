@@ -230,3 +230,11 @@ struct DistributedPGOData_t {
     int64_t solver_token;
     int32_t iteration_count;
 }
+
+struct Buffer {
+    Time_t timestamp;
+    int32_t drone_id;
+    int32_t msg_id;
+    int32_t msg_len;
+    byte buffer[msg_len];
+}
