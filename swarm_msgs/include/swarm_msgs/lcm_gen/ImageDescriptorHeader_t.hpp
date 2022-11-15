@@ -32,6 +32,10 @@ class ImageDescriptorHeader_t
 
         std::vector< float > image_desc;
 
+        int32_t    image_desc_size_int8;
+
+        std::vector< int8_t > image_desc_int8;
+
         Pose_t     pose_drone;
 
         Pose_t     camera_extrinsic;
@@ -165,6 +169,14 @@ int ImageDescriptorHeader_t::_encodeNoHash(void *buf, int offset, int maxlen) co
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    if(this->image_desc_size_int8 > 0) {
+        tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc_int8[0], this->image_desc_size_int8);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
     tlen = this->pose_drone._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -217,6 +229,15 @@ int ImageDescriptorHeader_t::_decodeNoHash(const void *buf, int offset, int maxl
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    if(this->image_desc_size_int8) {
+        this->image_desc_int8.resize(this->image_desc_size_int8);
+        tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc_int8[0], this->image_desc_size_int8);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
     tlen = this->pose_drone._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -251,6 +272,8 @@ int ImageDescriptorHeader_t::_getEncodedSizeNoHash() const
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, this->image_desc_size);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int8_t_encoded_array_size(NULL, this->image_desc_size_int8);
     enc_size += this->pose_drone._getEncodedSizeNoHash();
     enc_size += this->camera_extrinsic._getEncodedSizeNoHash();
     enc_size += __boolean_encoded_array_size(NULL, 1);
@@ -269,7 +292,7 @@ uint64_t ImageDescriptorHeader_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptorHeader_t::getHash };
 
-    uint64_t hash = 0x69a214f734d41ea2LL +
+    uint64_t hash = 0x4208209742869302LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp);

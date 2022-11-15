@@ -14,6 +14,18 @@ struct Point3d_t {
     double z;
 }
 
+struct Point2f_t {
+    float x;
+    float y;
+}
+
+struct Point3f_t {
+    float x;
+    float y;
+    float z;
+}
+
+
 struct Time_t {
     int32_t sec;
     int32_t nsec;
@@ -34,6 +46,8 @@ struct ImageDescriptorHeader_t {
     boolean is_lazy_frame;
     int32_t image_desc_size;
     float image_desc[image_desc_size];
+    int32_t image_desc_size_int8;
+    int8_t image_desc_int8[image_desc_size_int8];
     Pose_t pose_drone;
     Pose_t camera_extrinsic;
     boolean prevent_adding_db;
@@ -52,28 +66,35 @@ struct SlidingWindow_t {
 
 struct Landmark_t {
     int32_t frame_id;
-    int32_t landmark_id;
-    int32_t drone_id;
-    int32_t type;
-    Time_t timestamp;
-    Time_t stamp_discover;
-    int32_t camera_index;
     int32_t camera_id;
-    double cur_td;
-    int32_t flag;
-    Point2d_t pt2d;
-    Point3d_t pt3d_norm;
-    Point3d_t pt3d;
-    Point3d_t velocity;
+    int8_t drone_id;
+    int8_t type;
+    Time_t timestamp;
+    int8_t camera_index;
+    float cur_td;
+    LandmarkCompact_t compact;
+}
+
+
+struct LandmarkCompact_t {
+    int32_t landmark_id;
+    Time_t stamp_discover;
+    Point2f_t pt2d;
+    Point3f_t pt3d_norm;
+    Point3f_t pt3d;
+    int8_t flag;
+    Point3f_t velocity;
     boolean depth_mea;
-    double depth;
+    float depth;
 }
 
 struct LandmarkDescriptor_t {
     //MTU is 2304, better make it lower than 2000 byte
-    Landmark_t landmark;
+    LandmarkCompact_t landmark;
     int32_t desc_len;
     float landmark_descriptor[desc_len];
+    int32_t desc_len_int8;
+    int8_t landmark_descriptor_int8[desc_len_int8];
     int64_t msg_id;
     int64_t header_id;
 }
@@ -93,12 +114,16 @@ struct ImageDescriptor_t {
     int32_t matched_drone;
     int32_t landmark_descriptor_size;
     float landmark_descriptor[landmark_descriptor_size];
-
+    int32_t landmark_descriptor_size_int8;
+    int8_t landmark_descriptor_int8[landmark_descriptor_size_int8];
     int32_t landmark_scores_size;
     float landmark_scores[landmark_scores_size];
 
     int32_t image_desc_size;
     float image_desc[image_desc_size];
+    float cur_td;
+    int32_t image_desc_size_int8;
+    int8_t image_desc_int8[image_desc_size_int8];
 
     int32_t image_width;
     int32_t image_height;
@@ -140,6 +165,7 @@ struct ImageArrayDescriptor_t {
     Point3d_t Ba;
     Point3d_t Bg;
     SlidingWindow_t sld_win_status;
+    float cur_td;
 }
 
 struct LoopEdge_t {

@@ -9,19 +9,21 @@ except ImportError:
     from io import BytesIO
 import struct
 
-import Landmark_t
+import LandmarkCompact_t
 
 class LandmarkDescriptor_t(object):
-    __slots__ = ["landmark", "desc_len", "landmark_descriptor", "msg_id", "header_id"]
+    __slots__ = ["landmark", "desc_len", "landmark_descriptor", "desc_len_int8", "landmark_descriptor_int8", "msg_id", "header_id"]
 
-    __typenames__ = ["Landmark_t", "int32_t", "float", "int64_t", "int64_t"]
+    __typenames__ = ["LandmarkCompact_t", "int32_t", "float", "int32_t", "int8_t", "int64_t", "int64_t"]
 
-    __dimensions__ = [None, None, ["desc_len"], None, None]
+    __dimensions__ = [None, None, ["desc_len"], None, ["desc_len_int8"], None, None]
 
     def __init__(self):
-        self.landmark = Landmark_t()
+        self.landmark = LandmarkCompact_t()
         self.desc_len = 0
         self.landmark_descriptor = []
+        self.desc_len_int8 = 0
+        self.landmark_descriptor_int8 = []
         self.msg_id = 0
         self.header_id = 0
 
@@ -32,10 +34,12 @@ class LandmarkDescriptor_t(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        assert self.landmark._get_packed_fingerprint() == Landmark_t._get_packed_fingerprint()
+        assert self.landmark._get_packed_fingerprint() == LandmarkCompact_t._get_packed_fingerprint()
         self.landmark._encode_one(buf)
         buf.write(struct.pack(">i", self.desc_len))
         buf.write(struct.pack('>%df' % self.desc_len, *self.landmark_descriptor[:self.desc_len]))
+        buf.write(struct.pack(">i", self.desc_len_int8))
+        buf.write(struct.pack('>%db' % self.desc_len_int8, *self.landmark_descriptor_int8[:self.desc_len_int8]))
         buf.write(struct.pack(">qq", self.msg_id, self.header_id))
 
     def decode(data):
@@ -50,9 +54,11 @@ class LandmarkDescriptor_t(object):
 
     def _decode_one(buf):
         self = LandmarkDescriptor_t()
-        self.landmark = Landmark_t._decode_one(buf)
+        self.landmark = LandmarkCompact_t._decode_one(buf)
         self.desc_len = struct.unpack(">i", buf.read(4))[0]
         self.landmark_descriptor = struct.unpack('>%df' % self.desc_len, buf.read(self.desc_len * 4))
+        self.desc_len_int8 = struct.unpack(">i", buf.read(4))[0]
+        self.landmark_descriptor_int8 = struct.unpack('>%db' % self.desc_len_int8, buf.read(self.desc_len_int8))
         self.msg_id, self.header_id = struct.unpack(">qq", buf.read(16))
         return self
     _decode_one = staticmethod(_decode_one)
@@ -60,7 +66,7 @@ class LandmarkDescriptor_t(object):
     def _get_hash_recursive(parents):
         if LandmarkDescriptor_t in parents: return 0
         newparents = parents + [LandmarkDescriptor_t]
-        tmphash = (0xa03a31e3ccdf00b5+ Landmark_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0xd21abf75eaa17cda+ LandmarkCompact_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

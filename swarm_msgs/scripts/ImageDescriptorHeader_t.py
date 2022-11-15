@@ -14,11 +14,11 @@ import Time_t
 import Pose_t
 
 class ImageDescriptorHeader_t(object):
-    __slots__ = ["timestamp", "drone_id", "matched_frame", "matched_drone", "is_lazy_frame", "image_desc_size", "image_desc", "pose_drone", "camera_extrinsic", "prevent_adding_db", "msg_id", "frame_id", "feature_num", "camera_index"]
+    __slots__ = ["timestamp", "drone_id", "matched_frame", "matched_drone", "is_lazy_frame", "image_desc_size", "image_desc", "image_desc_size_int8", "image_desc_int8", "pose_drone", "camera_extrinsic", "prevent_adding_db", "msg_id", "frame_id", "feature_num", "camera_index"]
 
-    __typenames__ = ["Time_t", "int32_t", "int64_t", "int32_t", "boolean", "int32_t", "float", "Pose_t", "Pose_t", "boolean", "int64_t", "int64_t", "int32_t", "int32_t"]
+    __typenames__ = ["Time_t", "int32_t", "int64_t", "int32_t", "boolean", "int32_t", "float", "int32_t", "int8_t", "Pose_t", "Pose_t", "boolean", "int64_t", "int64_t", "int32_t", "int32_t"]
 
-    __dimensions__ = [None, None, None, None, None, None, ["image_desc_size"], None, None, None, None, None, None, None]
+    __dimensions__ = [None, None, None, None, None, None, ["image_desc_size"], None, ["image_desc_size_int8"], None, None, None, None, None, None, None]
 
     def __init__(self):
         self.timestamp = Time_t()
@@ -28,6 +28,8 @@ class ImageDescriptorHeader_t(object):
         self.is_lazy_frame = False
         self.image_desc_size = 0
         self.image_desc = []
+        self.image_desc_size_int8 = 0
+        self.image_desc_int8 = []
         self.pose_drone = Pose_t()
         self.camera_extrinsic = Pose_t()
         self.prevent_adding_db = False
@@ -47,6 +49,8 @@ class ImageDescriptorHeader_t(object):
         self.timestamp._encode_one(buf)
         buf.write(struct.pack(">iqibi", self.drone_id, self.matched_frame, self.matched_drone, self.is_lazy_frame, self.image_desc_size))
         buf.write(struct.pack('>%df' % self.image_desc_size, *self.image_desc[:self.image_desc_size]))
+        buf.write(struct.pack(">i", self.image_desc_size_int8))
+        buf.write(struct.pack('>%db' % self.image_desc_size_int8, *self.image_desc_int8[:self.image_desc_size_int8]))
         assert self.pose_drone._get_packed_fingerprint() == Pose_t._get_packed_fingerprint()
         self.pose_drone._encode_one(buf)
         assert self.camera_extrinsic._get_packed_fingerprint() == Pose_t._get_packed_fingerprint()
@@ -70,6 +74,8 @@ class ImageDescriptorHeader_t(object):
         self.is_lazy_frame = bool(struct.unpack('b', buf.read(1))[0])
         self.image_desc_size = struct.unpack(">i", buf.read(4))[0]
         self.image_desc = struct.unpack('>%df' % self.image_desc_size, buf.read(self.image_desc_size * 4))
+        self.image_desc_size_int8 = struct.unpack(">i", buf.read(4))[0]
+        self.image_desc_int8 = struct.unpack('>%db' % self.image_desc_size_int8, buf.read(self.image_desc_size_int8))
         self.pose_drone = Pose_t._decode_one(buf)
         self.camera_extrinsic = Pose_t._decode_one(buf)
         self.prevent_adding_db = bool(struct.unpack('b', buf.read(1))[0])
@@ -80,7 +86,7 @@ class ImageDescriptorHeader_t(object):
     def _get_hash_recursive(parents):
         if ImageDescriptorHeader_t in parents: return 0
         newparents = parents + [ImageDescriptorHeader_t]
-        tmphash = (0x69a214f734d41ea2+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0x4208209742869302+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

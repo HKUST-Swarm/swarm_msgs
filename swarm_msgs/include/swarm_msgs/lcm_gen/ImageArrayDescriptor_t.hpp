@@ -60,6 +60,8 @@ class ImageArrayDescriptor_t
 
         SlidingWindow_t sld_win_status;
 
+        float      cur_td;
+
     public:
         /**
          * Encode a message into binary form.
@@ -217,6 +219,9 @@ int ImageArrayDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) con
     tlen = this->sld_win_status._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -295,6 +300,9 @@ int ImageArrayDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxle
     tlen = this->sld_win_status._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -324,6 +332,7 @@ int ImageArrayDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += this->Ba._getEncodedSizeNoHash();
     enc_size += this->Bg._getEncodedSizeNoHash();
     enc_size += this->sld_win_status._getEncodedSizeNoHash();
+    enc_size += __float_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
@@ -335,7 +344,7 @@ uint64_t ImageArrayDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageArrayDescriptor_t::getHash };
 
-    uint64_t hash = 0x020b5a35c049c7abLL +
+    uint64_t hash = 0xf3adad9f3e1acdc0LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          ImageDescriptor_t::_computeHash(&cp) +

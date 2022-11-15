@@ -9,36 +9,26 @@ except ImportError:
     from io import BytesIO
 import struct
 
-import Point3d_t
-
 import Time_t
 
-import Point2d_t
+import LandmarkCompact_t
 
 class Landmark_t(object):
-    __slots__ = ["frame_id", "landmark_id", "drone_id", "type", "timestamp", "stamp_discover", "camera_index", "camera_id", "cur_td", "flag", "pt2d", "pt3d_norm", "pt3d", "velocity", "depth_mea", "depth"]
+    __slots__ = ["frame_id", "camera_id", "drone_id", "type", "timestamp", "camera_index", "cur_td", "compact"]
 
-    __typenames__ = ["int32_t", "int32_t", "int32_t", "int32_t", "Time_t", "Time_t", "int32_t", "int32_t", "double", "int32_t", "Point2d_t", "Point3d_t", "Point3d_t", "Point3d_t", "boolean", "double"]
+    __typenames__ = ["int32_t", "int32_t", "int8_t", "int8_t", "Time_t", "int8_t", "float", "LandmarkCompact_t"]
 
-    __dimensions__ = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+    __dimensions__ = [None, None, None, None, None, None, None, None]
 
     def __init__(self):
         self.frame_id = 0
-        self.landmark_id = 0
+        self.camera_id = 0
         self.drone_id = 0
         self.type = 0
         self.timestamp = Time_t()
-        self.stamp_discover = Time_t()
         self.camera_index = 0
-        self.camera_id = 0
         self.cur_td = 0.0
-        self.flag = 0
-        self.pt2d = Point2d_t()
-        self.pt3d_norm = Point3d_t()
-        self.pt3d = Point3d_t()
-        self.velocity = Point3d_t()
-        self.depth_mea = False
-        self.depth = 0.0
+        self.compact = LandmarkCompact_t()
 
     def encode(self):
         buf = BytesIO()
@@ -47,21 +37,12 @@ class Landmark_t(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        buf.write(struct.pack(">iiii", self.frame_id, self.landmark_id, self.drone_id, self.type))
+        buf.write(struct.pack(">iibb", self.frame_id, self.camera_id, self.drone_id, self.type))
         assert self.timestamp._get_packed_fingerprint() == Time_t._get_packed_fingerprint()
         self.timestamp._encode_one(buf)
-        assert self.stamp_discover._get_packed_fingerprint() == Time_t._get_packed_fingerprint()
-        self.stamp_discover._encode_one(buf)
-        buf.write(struct.pack(">iidi", self.camera_index, self.camera_id, self.cur_td, self.flag))
-        assert self.pt2d._get_packed_fingerprint() == Point2d_t._get_packed_fingerprint()
-        self.pt2d._encode_one(buf)
-        assert self.pt3d_norm._get_packed_fingerprint() == Point3d_t._get_packed_fingerprint()
-        self.pt3d_norm._encode_one(buf)
-        assert self.pt3d._get_packed_fingerprint() == Point3d_t._get_packed_fingerprint()
-        self.pt3d._encode_one(buf)
-        assert self.velocity._get_packed_fingerprint() == Point3d_t._get_packed_fingerprint()
-        self.velocity._encode_one(buf)
-        buf.write(struct.pack(">bd", self.depth_mea, self.depth))
+        buf.write(struct.pack(">bf", self.camera_index, self.cur_td))
+        assert self.compact._get_packed_fingerprint() == LandmarkCompact_t._get_packed_fingerprint()
+        self.compact._encode_one(buf)
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -75,23 +56,17 @@ class Landmark_t(object):
 
     def _decode_one(buf):
         self = Landmark_t()
-        self.frame_id, self.landmark_id, self.drone_id, self.type = struct.unpack(">iiii", buf.read(16))
+        self.frame_id, self.camera_id, self.drone_id, self.type = struct.unpack(">iibb", buf.read(10))
         self.timestamp = Time_t._decode_one(buf)
-        self.stamp_discover = Time_t._decode_one(buf)
-        self.camera_index, self.camera_id, self.cur_td, self.flag = struct.unpack(">iidi", buf.read(20))
-        self.pt2d = Point2d_t._decode_one(buf)
-        self.pt3d_norm = Point3d_t._decode_one(buf)
-        self.pt3d = Point3d_t._decode_one(buf)
-        self.velocity = Point3d_t._decode_one(buf)
-        self.depth_mea = bool(struct.unpack('b', buf.read(1))[0])
-        self.depth = struct.unpack(">d", buf.read(8))[0]
+        self.camera_index, self.cur_td = struct.unpack(">bf", buf.read(5))
+        self.compact = LandmarkCompact_t._decode_one(buf)
         return self
     _decode_one = staticmethod(_decode_one)
 
     def _get_hash_recursive(parents):
         if Landmark_t in parents: return 0
         newparents = parents + [Landmark_t]
-        tmphash = (0xa49eedc4118ec6f0+ Time_t._get_hash_recursive(newparents)+ Time_t._get_hash_recursive(newparents)+ Point2d_t._get_hash_recursive(newparents)+ Point3d_t._get_hash_recursive(newparents)+ Point3d_t._get_hash_recursive(newparents)+ Point3d_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0x8307ec673b387d0b+ Time_t._get_hash_recursive(newparents)+ LandmarkCompact_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

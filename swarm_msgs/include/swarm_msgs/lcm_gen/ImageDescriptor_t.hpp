@@ -33,6 +33,10 @@ class ImageDescriptor_t
 
         std::vector< float > landmark_descriptor;
 
+        int32_t    landmark_descriptor_size_int8;
+
+        std::vector< int8_t > landmark_descriptor_int8;
+
         int32_t    landmark_scores_size;
 
         std::vector< float > landmark_scores;
@@ -40,6 +44,12 @@ class ImageDescriptor_t
         int32_t    image_desc_size;
 
         std::vector< float > image_desc;
+
+        float      cur_td;
+
+        int32_t    image_desc_size_int8;
+
+        std::vector< int8_t > image_desc_int8;
 
         int32_t    image_width;
 
@@ -186,6 +196,14 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_size_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    if(this->landmark_descriptor_size_int8 > 0) {
+        tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_int8[0], this->landmark_descriptor_size_int8);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_scores_size, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -199,6 +217,17 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
 
     if(this->image_desc_size > 0) {
         tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc[0], this->image_desc_size);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    if(this->image_desc_size_int8 > 0) {
+        tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc_int8[0], this->image_desc_size_int8);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -276,6 +305,15 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_size_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    if(this->landmark_descriptor_size_int8) {
+        this->landmark_descriptor_int8.resize(this->landmark_descriptor_size_int8);
+        tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_int8[0], this->landmark_descriptor_size_int8);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_scores_size, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -291,6 +329,18 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
     if(this->image_desc_size) {
         this->image_desc.resize(this->image_desc_size);
         tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc[0], this->image_desc_size);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    if(this->image_desc_size_int8) {
+        this->image_desc_int8.resize(this->image_desc_size_int8);
+        tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc_int8[0], this->image_desc_size_int8);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -357,9 +407,14 @@ int ImageDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, this->landmark_descriptor_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int8_t_encoded_array_size(NULL, this->landmark_descriptor_size_int8);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, this->landmark_scores_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, this->image_desc_size);
+    enc_size += __float_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int8_t_encoded_array_size(NULL, this->image_desc_size_int8);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
@@ -386,7 +441,7 @@ uint64_t ImageDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptor_t::getHash };
 
-    uint64_t hash = 0xb46dfc8e10435b5bLL +
+    uint64_t hash = 0xc5b2567ef3dbd5beLL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

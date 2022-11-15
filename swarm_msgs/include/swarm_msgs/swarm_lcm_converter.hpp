@@ -9,6 +9,8 @@
 #include "lcm_gen/ImageDescriptor_t.hpp"
 #include "lcm_gen/LandmarkDescriptor_t.hpp"
 #include "lcm_gen/ImageDescriptorHeader_t.hpp"
+#include "lcm_gen/Point2d_t.hpp"
+#include "lcm_gen/Point3d_t.hpp"
 #include <swarm_msgs/ImageArrayDescriptor.h>
 #include <swarm_msgs/ImageDescriptor.h>
 #include "base_types.hpp"
@@ -42,43 +44,6 @@ inline geometry_msgs::Pose toROSPose(const Pose_t & t) {
 
 inline geometry_msgs::Pose toROSPose(const Swarm::Pose & t) {
     return t.toROS();
-}
-
-inline void ROSPoints2LCM(const std::vector<geometry_msgs::Point32> & src, std::vector<Point2d_t> & dst) {
-    for (auto pt : src) {
-        Point2d_t pt2;
-        pt2.x = pt.x;
-        pt2.y = pt.y;
-        dst.push_back(pt2);
-    }
-}
-
-inline void CVPoints2LCM(const std::vector<cv::Point2f> & src, std::vector<Point2d_t> & dst) {
-    for (auto pt : src) {
-        Point2d_t pt2;
-        pt2.x = pt.x;
-        pt2.y = pt.y;
-        dst.push_back(pt2);
-    }
-}
-
-inline void LCMPoints2ROS(const std::vector<Point2d_t> & src, std::vector<geometry_msgs::Point32> & dst) {
-    for (auto pt : src) {
-        geometry_msgs::Point32 pt2;
-        pt2.x = pt.x;
-        pt2.y = pt.y;
-        dst.push_back(pt2);
-    }
-}
-
-inline void LCMPoints2ROS(const std::vector<Point3d_t> & src, std::vector<geometry_msgs::Point32> & dst) {
-    for (auto pt : src) {
-        geometry_msgs::Point32 pt2;
-        pt2.x = pt.x;
-        pt2.y = pt.y;
-        pt2.z = pt.z;
-        dst.push_back(pt2);
-    }
 }
 
 inline std::vector<geometry_msgs::Point32> toROSPoints(const std::vector<Eigen::Vector3d> & src) {
@@ -117,45 +82,12 @@ inline std::vector<geometry_msgs::Point32> toROSPoints(const std::vector<Eigen::
     return dst;
 }
 
-inline std::vector<Point3d_t> toLCMPoints(const std::vector<Eigen::Vector3d> & src) {
-    std::vector<Point3d_t> dst;
-     for (auto pt : src) {
-        Point3d_t pt2;
-        pt2.x = pt.x();
-        pt2.y = pt.y();
-        pt2.z = pt.z();
-        dst.push_back(pt2);
-    }
-    return dst;
-}
-
-inline std::vector<Point2d_t> toLCMPoints(const std::vector<Eigen::Vector2d> & src) {
-    std::vector<Point2d_t> dst;
-     for (auto pt : src) {
-        Point2d_t pt2;
-        pt2.x = pt.x();
-        pt2.y = pt.y();
-        dst.push_back(pt2);
-    }
-    return dst;
-}
-
-inline void ROSPoints2LCM(const std::vector<geometry_msgs::Point32> & src, std::vector<Point3d_t> & dst) {
-    for (auto pt : src) {
-        Point3d_t pt3;
-        pt3.x = pt.x;
-        pt3.y = pt.y;
-        pt3.z = pt.z;
-        dst.push_back(pt3);
-    }
-}
-
-
 inline cv::Mat cvfeatureFromByte(uint8_t*data, int feature_num, int feature_len = 32) {
     cv::Mat mat(feature_num, feature_len, CV_8UC1);
     memcpy(mat.data, data, feature_num*feature_len*sizeof(uint8_t));
     return mat;
 }
+
 
 inline cv::Point2f toCV(Point2d_t a) {
     return cv::Point2f(a.x, a.y);
