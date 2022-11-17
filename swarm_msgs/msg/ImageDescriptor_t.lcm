@@ -38,24 +38,6 @@ struct IMUData_t {
     Point3d_t gyro;
 }
 
-struct ImageDescriptorHeader_t {
-    Time_t  timestamp;
-    int32_t drone_id;
-    int64_t matched_frame;
-    int32_t matched_drone;
-    boolean is_lazy_frame;
-    int32_t image_desc_size;
-    float image_desc[image_desc_size];
-    int32_t image_desc_size_int8;
-    int8_t image_desc_int8[image_desc_size_int8];
-    Pose_t pose_drone;
-    Pose_t camera_extrinsic;
-    boolean prevent_adding_db;
-    int64_t msg_id;
-    int64_t frame_id;
-    int32_t feature_num;
-    int32_t camera_index;
-}
 
 struct SlidingWindow_t {
     Time_t timestamp;
@@ -88,30 +70,44 @@ struct LandmarkCompact_t {
     float depth;
 }
 
-struct LandmarkDescriptor_t {
-    //MTU is 2304, better make it lower than 2000 byte
-    LandmarkCompact_t landmark;
-    int32_t desc_len;
-    float landmark_descriptor[desc_len];
-    int32_t desc_len_int8;
-    int8_t landmark_descriptor_int8[desc_len_int8];
-    int64_t msg_id;
-    int64_t header_id;
-}
-
 struct LandmarkDescriptorPacket_t {
     //MTU is 2304, better make it lower than 2000 byte
-    int32_t drone_id;
+    int64_t msg_id;
+    int64_t header_id;
     int32_t landmark_num;
-    LandmarkDescriptor_t landmarks[landmark_num];
+    int32_t desc_len_int8;
+    int32_t desc_len;
+    LandmarkCompact_t landmarks[landmark_num];
+    int8_t landmark_descriptor_int8[desc_len_int8];
+    int8_t landmark_descriptor[desc_len];
+}
+
+
+struct ImageDescriptorHeader_t {
+    Time_t  timestamp;
+    int32_t drone_id;
+    int32_t reference_frame_id;
+    int64_t matched_frame;
+    int32_t matched_drone;
+    boolean is_lazy_frame;
+    int32_t image_desc_size;
+    float image_desc[image_desc_size];
+    int32_t image_desc_size_int8;
+    int8_t image_desc_int8[image_desc_size_int8];
+    Pose_t pose_drone;
+    Pose_t camera_extrinsic;
+    boolean prevent_adding_db;
+    int64_t msg_id;
+    int64_t frame_id;
+    int32_t feature_num;
+    int32_t camera_index;
+    int32_t camera_id;
+    float cur_td;
+    SlidingWindow_t sld_win_status;
 }
 
 struct ImageDescriptor_t {
-    Time_t  timestamp;
-    int32_t drone_id;
-    int32_t is_lazy_frame;
-    int64_t matched_frame;
-    int32_t matched_drone;
+    ImageDescriptorHeader_t header;
     int32_t landmark_descriptor_size;
     float landmark_descriptor[landmark_descriptor_size];
     int32_t landmark_descriptor_size_int8;
@@ -119,30 +115,13 @@ struct ImageDescriptor_t {
     int32_t landmark_scores_size;
     float landmark_scores[landmark_scores_size];
 
-    int32_t image_desc_size;
-    float image_desc[image_desc_size];
-    float cur_td;
-    int32_t image_desc_size_int8;
-    int8_t image_desc_int8[image_desc_size_int8];
-
     int32_t image_width;
     int32_t image_height;
     int32_t image_size;
     byte image[image_size];
-    int32_t camera_index;
-    int32_t camera_id;
-
-    Pose_t pose_drone;
-
-    Pose_t camera_extrinsic;
 
     int32_t landmark_num;
-    
     Landmark_t landmarks[landmark_num];
-    
-    boolean prevent_adding_db;
-    int64_t msg_id;
-    int64_t frame_id;
 }
 
 struct ImageArrayDescriptor_t {
@@ -217,6 +196,7 @@ struct DistributedVinsData_t {
     Time_t timestamp;
     int32_t drone_id;
     int32_t sld_win_len;
+    int32_t reference_frame_id;
     int64_t frame_ids[sld_win_len];
     Pose_t frame_poses[sld_win_len];
     int32_t camera_num;

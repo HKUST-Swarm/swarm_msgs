@@ -10,18 +10,28 @@
 #include <lcm/lcm_coretypes.h>
 
 #include <vector>
-#include "LandmarkDescriptor_t.hpp"
+#include "LandmarkCompact_t.hpp"
 
 
 class LandmarkDescriptorPacket_t
 {
     public:
         /// MTU is 2304, better make it lower than 2000 byte
-        int32_t    drone_id;
+        int64_t    msg_id;
+
+        int64_t    header_id;
 
         int32_t    landmark_num;
 
-        std::vector< LandmarkDescriptor_t > landmarks;
+        int32_t    desc_len_int8;
+
+        int32_t    desc_len;
+
+        std::vector< LandmarkCompact_t > landmarks;
+
+        std::vector< int8_t > landmark_descriptor_int8;
+
+        std::vector< int8_t > landmark_descriptor;
 
     public:
         /**
@@ -119,14 +129,33 @@ int LandmarkDescriptorPacket_t::_encodeNoHash(void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->header_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->desc_len_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->desc_len, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     for (int a0 = 0; a0 < this->landmark_num; a0++) {
         tlen = this->landmarks[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    if(this->desc_len_int8 > 0) {
+        tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_int8[0], this->desc_len_int8);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    if(this->desc_len > 0) {
+        tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor[0], this->desc_len);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -137,10 +166,19 @@ int LandmarkDescriptorPacket_t::_decodeNoHash(const void *buf, int offset, int m
 {
     int pos = 0, tlen;
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
+    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->header_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_num, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->desc_len_int8, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->desc_len, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     try {
@@ -153,17 +191,34 @@ int LandmarkDescriptorPacket_t::_decodeNoHash(const void *buf, int offset, int m
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
+    if(this->desc_len_int8) {
+        this->landmark_descriptor_int8.resize(this->desc_len_int8);
+        tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_int8[0], this->desc_len_int8);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
+    if(this->desc_len) {
+        this->landmark_descriptor.resize(this->desc_len);
+        tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor[0], this->desc_len);
+        if(tlen < 0) return tlen; else pos += tlen;
+    }
+
     return pos;
 }
 
 int LandmarkDescriptorPacket_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     for (int a0 = 0; a0 < this->landmark_num; a0++) {
         enc_size += this->landmarks[a0]._getEncodedSizeNoHash();
     }
+    enc_size += __int8_t_encoded_array_size(NULL, this->desc_len_int8);
+    enc_size += __int8_t_encoded_array_size(NULL, this->desc_len);
     return enc_size;
 }
 
@@ -175,8 +230,8 @@ uint64_t LandmarkDescriptorPacket_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, LandmarkDescriptorPacket_t::getHash };
 
-    uint64_t hash = 0xbd77462e2459b09cLL +
-         LandmarkDescriptor_t::_computeHash(&cp);
+    uint64_t hash = 0x76dbc519d366aaecLL +
+         LandmarkCompact_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
 }

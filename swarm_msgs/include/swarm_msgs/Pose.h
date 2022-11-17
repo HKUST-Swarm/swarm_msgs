@@ -369,7 +369,7 @@ public:
 
     std::string toStr(bool for_file=false) const {
         auto _rpy = rpy();
-        char _ret[128] = {0};
+        char _ret[256] = {0};
         if (for_file) {
             sprintf(_ret, "%3.6f %3.6f %3.6f %3.6f %3.6f %3.6f %3.6f",
                position.x(), position.y(), position.z(),

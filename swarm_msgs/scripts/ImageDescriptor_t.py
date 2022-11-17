@@ -11,47 +11,29 @@ import struct
 
 import Landmark_t
 
-import Time_t
-
-import Pose_t
+import ImageDescriptorHeader_t
 
 class ImageDescriptor_t(object):
-    __slots__ = ["timestamp", "drone_id", "is_lazy_frame", "matched_frame", "matched_drone", "landmark_descriptor_size", "landmark_descriptor", "landmark_descriptor_size_int8", "landmark_descriptor_int8", "landmark_scores_size", "landmark_scores", "image_desc_size", "image_desc", "cur_td", "image_desc_size_int8", "image_desc_int8", "image_width", "image_height", "image_size", "image", "camera_index", "camera_id", "pose_drone", "camera_extrinsic", "landmark_num", "landmarks", "prevent_adding_db", "msg_id", "frame_id"]
+    __slots__ = ["header", "landmark_descriptor_size", "landmark_descriptor", "landmark_descriptor_size_int8", "landmark_descriptor_int8", "landmark_scores_size", "landmark_scores", "image_width", "image_height", "image_size", "image", "landmark_num", "landmarks"]
 
-    __typenames__ = ["Time_t", "int32_t", "int32_t", "int64_t", "int32_t", "int32_t", "float", "int32_t", "int8_t", "int32_t", "float", "int32_t", "float", "float", "int32_t", "int8_t", "int32_t", "int32_t", "int32_t", "byte", "int32_t", "int32_t", "Pose_t", "Pose_t", "int32_t", "Landmark_t", "boolean", "int64_t", "int64_t"]
+    __typenames__ = ["ImageDescriptorHeader_t", "int32_t", "float", "int32_t", "int8_t", "int32_t", "float", "int32_t", "int32_t", "int32_t", "byte", "int32_t", "Landmark_t"]
 
-    __dimensions__ = [None, None, None, None, None, None, ["landmark_descriptor_size"], None, ["landmark_descriptor_size_int8"], None, ["landmark_scores_size"], None, ["image_desc_size"], None, None, ["image_desc_size_int8"], None, None, None, ["image_size"], None, None, None, None, None, ["landmark_num"], None, None, None]
+    __dimensions__ = [None, None, ["landmark_descriptor_size"], None, ["landmark_descriptor_size_int8"], None, ["landmark_scores_size"], None, None, None, ["image_size"], None, ["landmark_num"]]
 
     def __init__(self):
-        self.timestamp = Time_t()
-        self.drone_id = 0
-        self.is_lazy_frame = 0
-        self.matched_frame = 0
-        self.matched_drone = 0
+        self.header = ImageDescriptorHeader_t()
         self.landmark_descriptor_size = 0
         self.landmark_descriptor = []
         self.landmark_descriptor_size_int8 = 0
         self.landmark_descriptor_int8 = []
         self.landmark_scores_size = 0
         self.landmark_scores = []
-        self.image_desc_size = 0
-        self.image_desc = []
-        self.cur_td = 0.0
-        self.image_desc_size_int8 = 0
-        self.image_desc_int8 = []
         self.image_width = 0
         self.image_height = 0
         self.image_size = 0
         self.image = ""
-        self.camera_index = 0
-        self.camera_id = 0
-        self.pose_drone = Pose_t()
-        self.camera_extrinsic = Pose_t()
         self.landmark_num = 0
         self.landmarks = []
-        self.prevent_adding_db = False
-        self.msg_id = 0
-        self.frame_id = 0
 
     def encode(self):
         buf = BytesIO()
@@ -60,30 +42,20 @@ class ImageDescriptor_t(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        assert self.timestamp._get_packed_fingerprint() == Time_t._get_packed_fingerprint()
-        self.timestamp._encode_one(buf)
-        buf.write(struct.pack(">iiqii", self.drone_id, self.is_lazy_frame, self.matched_frame, self.matched_drone, self.landmark_descriptor_size))
+        assert self.header._get_packed_fingerprint() == ImageDescriptorHeader_t._get_packed_fingerprint()
+        self.header._encode_one(buf)
+        buf.write(struct.pack(">i", self.landmark_descriptor_size))
         buf.write(struct.pack('>%df' % self.landmark_descriptor_size, *self.landmark_descriptor[:self.landmark_descriptor_size]))
         buf.write(struct.pack(">i", self.landmark_descriptor_size_int8))
         buf.write(struct.pack('>%db' % self.landmark_descriptor_size_int8, *self.landmark_descriptor_int8[:self.landmark_descriptor_size_int8]))
         buf.write(struct.pack(">i", self.landmark_scores_size))
         buf.write(struct.pack('>%df' % self.landmark_scores_size, *self.landmark_scores[:self.landmark_scores_size]))
-        buf.write(struct.pack(">i", self.image_desc_size))
-        buf.write(struct.pack('>%df' % self.image_desc_size, *self.image_desc[:self.image_desc_size]))
-        buf.write(struct.pack(">fi", self.cur_td, self.image_desc_size_int8))
-        buf.write(struct.pack('>%db' % self.image_desc_size_int8, *self.image_desc_int8[:self.image_desc_size_int8]))
         buf.write(struct.pack(">iii", self.image_width, self.image_height, self.image_size))
         buf.write(bytearray(self.image[:self.image_size]))
-        buf.write(struct.pack(">ii", self.camera_index, self.camera_id))
-        assert self.pose_drone._get_packed_fingerprint() == Pose_t._get_packed_fingerprint()
-        self.pose_drone._encode_one(buf)
-        assert self.camera_extrinsic._get_packed_fingerprint() == Pose_t._get_packed_fingerprint()
-        self.camera_extrinsic._encode_one(buf)
         buf.write(struct.pack(">i", self.landmark_num))
         for i0 in range(self.landmark_num):
             assert self.landmarks[i0]._get_packed_fingerprint() == Landmark_t._get_packed_fingerprint()
             self.landmarks[i0]._encode_one(buf)
-        buf.write(struct.pack(">bqq", self.prevent_adding_db, self.msg_id, self.frame_id))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -97,35 +69,26 @@ class ImageDescriptor_t(object):
 
     def _decode_one(buf):
         self = ImageDescriptor_t()
-        self.timestamp = Time_t._decode_one(buf)
-        self.drone_id, self.is_lazy_frame, self.matched_frame, self.matched_drone, self.landmark_descriptor_size = struct.unpack(">iiqii", buf.read(24))
+        self.header = ImageDescriptorHeader_t._decode_one(buf)
+        self.landmark_descriptor_size = struct.unpack(">i", buf.read(4))[0]
         self.landmark_descriptor = struct.unpack('>%df' % self.landmark_descriptor_size, buf.read(self.landmark_descriptor_size * 4))
         self.landmark_descriptor_size_int8 = struct.unpack(">i", buf.read(4))[0]
         self.landmark_descriptor_int8 = struct.unpack('>%db' % self.landmark_descriptor_size_int8, buf.read(self.landmark_descriptor_size_int8))
         self.landmark_scores_size = struct.unpack(">i", buf.read(4))[0]
         self.landmark_scores = struct.unpack('>%df' % self.landmark_scores_size, buf.read(self.landmark_scores_size * 4))
-        self.image_desc_size = struct.unpack(">i", buf.read(4))[0]
-        self.image_desc = struct.unpack('>%df' % self.image_desc_size, buf.read(self.image_desc_size * 4))
-        self.cur_td, self.image_desc_size_int8 = struct.unpack(">fi", buf.read(8))
-        self.image_desc_int8 = struct.unpack('>%db' % self.image_desc_size_int8, buf.read(self.image_desc_size_int8))
         self.image_width, self.image_height, self.image_size = struct.unpack(">iii", buf.read(12))
         self.image = buf.read(self.image_size)
-        self.camera_index, self.camera_id = struct.unpack(">ii", buf.read(8))
-        self.pose_drone = Pose_t._decode_one(buf)
-        self.camera_extrinsic = Pose_t._decode_one(buf)
         self.landmark_num = struct.unpack(">i", buf.read(4))[0]
         self.landmarks = []
         for i0 in range(self.landmark_num):
             self.landmarks.append(Landmark_t._decode_one(buf))
-        self.prevent_adding_db = bool(struct.unpack('b', buf.read(1))[0])
-        self.msg_id, self.frame_id = struct.unpack(">qq", buf.read(16))
         return self
     _decode_one = staticmethod(_decode_one)
 
     def _get_hash_recursive(parents):
         if ImageDescriptor_t in parents: return 0
         newparents = parents + [ImageDescriptor_t]
-        tmphash = (0xc5b2567ef3dbd5be+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Landmark_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0x2a09ee1712d1401+ ImageDescriptorHeader_t._get_hash_recursive(newparents)+ Landmark_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

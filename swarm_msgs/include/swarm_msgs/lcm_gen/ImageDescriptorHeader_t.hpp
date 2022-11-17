@@ -13,6 +13,7 @@
 #include "Time_t.hpp"
 #include "Pose_t.hpp"
 #include "Pose_t.hpp"
+#include "SlidingWindow_t.hpp"
 
 
 class ImageDescriptorHeader_t
@@ -21,6 +22,8 @@ class ImageDescriptorHeader_t
         Time_t     timestamp;
 
         int32_t    drone_id;
+
+        int32_t    reference_frame_id;
 
         int64_t    matched_frame;
 
@@ -49,6 +52,12 @@ class ImageDescriptorHeader_t
         int32_t    feature_num;
 
         int32_t    camera_index;
+
+        int32_t    camera_id;
+
+        float      cur_td;
+
+        SlidingWindow_t sld_win_status;
 
     public:
         /**
@@ -152,6 +161,9 @@ int ImageDescriptorHeader_t::_encodeNoHash(void *buf, int offset, int maxlen) co
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->reference_frame_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->matched_frame, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -198,6 +210,15 @@ int ImageDescriptorHeader_t::_encodeNoHash(void *buf, int offset, int maxlen) co
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->sld_win_status._encodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -209,6 +230,9 @@ int ImageDescriptorHeader_t::_decodeNoHash(const void *buf, int offset, int maxl
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->reference_frame_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->matched_frame, 1);
@@ -259,6 +283,15 @@ int ImageDescriptorHeader_t::_decodeNoHash(const void *buf, int offset, int maxl
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = this->sld_win_status._decodeNoHash(buf, offset + pos, maxlen - pos);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     return pos;
 }
 
@@ -266,6 +299,7 @@ int ImageDescriptorHeader_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
     enc_size += this->timestamp._getEncodedSizeNoHash();
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
@@ -281,6 +315,9 @@ int ImageDescriptorHeader_t::_getEncodedSizeNoHash() const
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __float_encoded_array_size(NULL, 1);
+    enc_size += this->sld_win_status._getEncodedSizeNoHash();
     return enc_size;
 }
 
@@ -292,10 +329,11 @@ uint64_t ImageDescriptorHeader_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptorHeader_t::getHash };
 
-    uint64_t hash = 0x4208209742869302LL +
+    uint64_t hash = 0xa18d8e8b8bc63894LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
-         Pose_t::_computeHash(&cp);
+         Pose_t::_computeHash(&cp) +
+         SlidingWindow_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
 }

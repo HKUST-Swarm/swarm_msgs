@@ -25,6 +25,8 @@ class DistributedVinsData_t
 
         int32_t    sld_win_len;
 
+        int32_t    reference_frame_id;
+
         std::vector< int64_t > frame_ids;
 
         std::vector< Pose_t > frame_poses;
@@ -150,6 +152,9 @@ int DistributedVinsData_t::_encodeNoHash(void *buf, int offset, int maxlen) cons
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->sld_win_len, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->reference_frame_id, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     if(this->sld_win_len > 0) {
         tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->frame_ids[0], this->sld_win_len);
         if(tlen < 0) return tlen; else pos += tlen;
@@ -206,6 +211,9 @@ int DistributedVinsData_t::_decodeNoHash(const void *buf, int offset, int maxlen
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->sld_win_len, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
+    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->reference_frame_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
     if(this->sld_win_len) {
@@ -277,6 +285,7 @@ int DistributedVinsData_t::_getEncodedSizeNoHash() const
     enc_size += this->timestamp._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, this->sld_win_len);
     for (int a0 = 0; a0 < this->sld_win_len; a0++) {
         enc_size += this->frame_poses[a0]._getEncodedSizeNoHash();
@@ -304,7 +313,7 @@ uint64_t DistributedVinsData_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, DistributedVinsData_t::getHash };
 
-    uint64_t hash = 0x62efbedca6d24c00LL +
+    uint64_t hash = 0xba17fbf89d93c3baLL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

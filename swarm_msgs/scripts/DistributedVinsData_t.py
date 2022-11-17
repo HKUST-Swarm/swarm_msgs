@@ -14,16 +14,17 @@ import Time_t
 import Pose_t
 
 class DistributedVinsData_t(object):
-    __slots__ = ["timestamp", "drone_id", "sld_win_len", "frame_ids", "frame_poses", "camera_num", "cam_ids", "extrinsic", "remote_drone_num", "remote_drone_ids", "relative_coordinates", "solver_token", "iteration_count"]
+    __slots__ = ["timestamp", "drone_id", "sld_win_len", "reference_frame_id", "frame_ids", "frame_poses", "camera_num", "cam_ids", "extrinsic", "remote_drone_num", "remote_drone_ids", "relative_coordinates", "solver_token", "iteration_count"]
 
-    __typenames__ = ["Time_t", "int32_t", "int32_t", "int64_t", "Pose_t", "int32_t", "int64_t", "Pose_t", "int32_t", "int64_t", "Pose_t", "int64_t", "int32_t"]
+    __typenames__ = ["Time_t", "int32_t", "int32_t", "int32_t", "int64_t", "Pose_t", "int32_t", "int64_t", "Pose_t", "int32_t", "int64_t", "Pose_t", "int64_t", "int32_t"]
 
-    __dimensions__ = [None, None, None, ["sld_win_len"], ["sld_win_len"], None, ["camera_num"], ["camera_num"], None, ["remote_drone_num"], ["remote_drone_num"], None, None]
+    __dimensions__ = [None, None, None, None, ["sld_win_len"], ["sld_win_len"], None, ["camera_num"], ["camera_num"], None, ["remote_drone_num"], ["remote_drone_num"], None, None]
 
     def __init__(self):
         self.timestamp = Time_t()
         self.drone_id = 0
         self.sld_win_len = 0
+        self.reference_frame_id = 0
         self.frame_ids = []
         self.frame_poses = []
         self.camera_num = 0
@@ -44,7 +45,7 @@ class DistributedVinsData_t(object):
     def _encode_one(self, buf):
         assert self.timestamp._get_packed_fingerprint() == Time_t._get_packed_fingerprint()
         self.timestamp._encode_one(buf)
-        buf.write(struct.pack(">ii", self.drone_id, self.sld_win_len))
+        buf.write(struct.pack(">iii", self.drone_id, self.sld_win_len, self.reference_frame_id))
         buf.write(struct.pack('>%dq' % self.sld_win_len, *self.frame_ids[:self.sld_win_len]))
         for i0 in range(self.sld_win_len):
             assert self.frame_poses[i0]._get_packed_fingerprint() == Pose_t._get_packed_fingerprint()
@@ -74,7 +75,7 @@ class DistributedVinsData_t(object):
     def _decode_one(buf):
         self = DistributedVinsData_t()
         self.timestamp = Time_t._decode_one(buf)
-        self.drone_id, self.sld_win_len = struct.unpack(">ii", buf.read(8))
+        self.drone_id, self.sld_win_len, self.reference_frame_id = struct.unpack(">iii", buf.read(12))
         self.frame_ids = struct.unpack('>%dq' % self.sld_win_len, buf.read(self.sld_win_len * 8))
         self.frame_poses = []
         for i0 in range(self.sld_win_len):
@@ -96,7 +97,7 @@ class DistributedVinsData_t(object):
     def _get_hash_recursive(parents):
         if DistributedVinsData_t in parents: return 0
         newparents = parents + [DistributedVinsData_t]
-        tmphash = (0x62efbedca6d24c00+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0xba17fbf89d93c3ba+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

@@ -9,19 +9,24 @@ except ImportError:
     from io import BytesIO
 import struct
 
-import LandmarkDescriptor_t
+import LandmarkCompact_t
 
 class LandmarkDescriptorPacket_t(object):
-    __slots__ = ["drone_id", "landmark_num", "landmarks"]
+    __slots__ = ["msg_id", "header_id", "landmark_num", "desc_len_int8", "desc_len", "landmarks", "landmark_descriptor_int8", "landmark_descriptor"]
 
-    __typenames__ = ["int32_t", "int32_t", "LandmarkDescriptor_t"]
+    __typenames__ = ["int64_t", "int64_t", "int32_t", "int32_t", "int32_t", "LandmarkCompact_t", "int8_t", "int8_t"]
 
-    __dimensions__ = [None, None, ["landmark_num"]]
+    __dimensions__ = [None, None, None, None, None, ["landmark_num"], ["desc_len_int8"], ["desc_len"]]
 
     def __init__(self):
-        self.drone_id = 0
+        self.msg_id = 0
+        self.header_id = 0
         self.landmark_num = 0
+        self.desc_len_int8 = 0
+        self.desc_len = 0
         self.landmarks = []
+        self.landmark_descriptor_int8 = []
+        self.landmark_descriptor = []
 
     def encode(self):
         buf = BytesIO()
@@ -30,10 +35,12 @@ class LandmarkDescriptorPacket_t(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        buf.write(struct.pack(">ii", self.drone_id, self.landmark_num))
+        buf.write(struct.pack(">qqiii", self.msg_id, self.header_id, self.landmark_num, self.desc_len_int8, self.desc_len))
         for i0 in range(self.landmark_num):
-            assert self.landmarks[i0]._get_packed_fingerprint() == LandmarkDescriptor_t._get_packed_fingerprint()
+            assert self.landmarks[i0]._get_packed_fingerprint() == LandmarkCompact_t._get_packed_fingerprint()
             self.landmarks[i0]._encode_one(buf)
+        buf.write(struct.pack('>%db' % self.desc_len_int8, *self.landmark_descriptor_int8[:self.desc_len_int8]))
+        buf.write(struct.pack('>%db' % self.desc_len, *self.landmark_descriptor[:self.desc_len]))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -47,17 +54,19 @@ class LandmarkDescriptorPacket_t(object):
 
     def _decode_one(buf):
         self = LandmarkDescriptorPacket_t()
-        self.drone_id, self.landmark_num = struct.unpack(">ii", buf.read(8))
+        self.msg_id, self.header_id, self.landmark_num, self.desc_len_int8, self.desc_len = struct.unpack(">qqiii", buf.read(28))
         self.landmarks = []
         for i0 in range(self.landmark_num):
-            self.landmarks.append(LandmarkDescriptor_t._decode_one(buf))
+            self.landmarks.append(LandmarkCompact_t._decode_one(buf))
+        self.landmark_descriptor_int8 = struct.unpack('>%db' % self.desc_len_int8, buf.read(self.desc_len_int8))
+        self.landmark_descriptor = struct.unpack('>%db' % self.desc_len, buf.read(self.desc_len))
         return self
     _decode_one = staticmethod(_decode_one)
 
     def _get_hash_recursive(parents):
         if LandmarkDescriptorPacket_t in parents: return 0
         newparents = parents + [LandmarkDescriptorPacket_t]
-        tmphash = (0xbd77462e2459b09c+ LandmarkDescriptor_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0x76dbc519d366aaec+ LandmarkCompact_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

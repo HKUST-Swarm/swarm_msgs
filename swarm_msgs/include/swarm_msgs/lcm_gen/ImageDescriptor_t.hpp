@@ -10,24 +10,14 @@
 #include <lcm/lcm_coretypes.h>
 
 #include <vector>
-#include "Time_t.hpp"
-#include "Pose_t.hpp"
-#include "Pose_t.hpp"
+#include "ImageDescriptorHeader_t.hpp"
 #include "Landmark_t.hpp"
 
 
 class ImageDescriptor_t
 {
     public:
-        Time_t     timestamp;
-
-        int32_t    drone_id;
-
-        int32_t    is_lazy_frame;
-
-        int64_t    matched_frame;
-
-        int32_t    matched_drone;
+        ImageDescriptorHeader_t header;
 
         int32_t    landmark_descriptor_size;
 
@@ -41,16 +31,6 @@ class ImageDescriptor_t
 
         std::vector< float > landmark_scores;
 
-        int32_t    image_desc_size;
-
-        std::vector< float > image_desc;
-
-        float      cur_td;
-
-        int32_t    image_desc_size_int8;
-
-        std::vector< int8_t > image_desc_int8;
-
         int32_t    image_width;
 
         int32_t    image_height;
@@ -59,23 +39,9 @@ class ImageDescriptor_t
 
         std::vector< uint8_t > image;
 
-        int32_t    camera_index;
-
-        int32_t    camera_id;
-
-        Pose_t     pose_drone;
-
-        Pose_t     camera_extrinsic;
-
         int32_t    landmark_num;
 
         std::vector< Landmark_t > landmarks;
-
-        int8_t     prevent_adding_db;
-
-        int64_t    msg_id;
-
-        int64_t    frame_id;
 
     public:
         /**
@@ -173,19 +139,7 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
 
-    tlen = this->timestamp._encodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->is_lazy_frame, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->matched_frame, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->matched_drone, 1);
+    tlen = this->header._encodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_size, 1);
@@ -212,25 +166,6 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->image_desc_size > 0) {
-        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc[0], this->image_desc_size);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size_int8, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->image_desc_size_int8 > 0) {
-        tlen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_desc_int8[0], this->image_desc_size_int8);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->image_width, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -245,18 +180,6 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = this->pose_drone._encodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = this->camera_extrinsic._encodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
     tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->landmark_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -265,15 +188,6 @@ int ImageDescriptor_t::_encodeNoHash(void *buf, int offset, int maxlen) const
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->prevent_adding_db, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
     return pos;
 }
 
@@ -281,19 +195,7 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
-    tlen = this->timestamp._decodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->drone_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->is_lazy_frame, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->matched_frame, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->matched_drone, 1);
+    tlen = this->header._decodeNoHash(buf, offset + pos, maxlen - pos);
     if(tlen < 0) return tlen; else pos += tlen;
 
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_descriptor_size, 1);
@@ -323,27 +225,6 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->image_desc_size) {
-        this->image_desc.resize(this->image_desc_size);
-        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc[0], this->image_desc_size);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->cur_td, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc_size_int8, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->image_desc_size_int8) {
-        this->image_desc_int8.resize(this->image_desc_size_int8);
-        tlen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_desc_int8[0], this->image_desc_size_int8);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->image_width, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -359,18 +240,6 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_index, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->camera_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = this->pose_drone._decodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = this->camera_extrinsic._decodeNoHash(buf, offset + pos, maxlen - pos);
-    if(tlen < 0) return tlen; else pos += tlen;
-
     tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->landmark_num, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -384,26 +253,13 @@ int ImageDescriptor_t::_decodeNoHash(const void *buf, int offset, int maxlen)
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->prevent_adding_db, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->frame_id, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
     return pos;
 }
 
 int ImageDescriptor_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
-    enc_size += this->timestamp._getEncodedSizeNoHash();
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
+    enc_size += this->header._getEncodedSizeNoHash();
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, this->landmark_descriptor_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
@@ -411,25 +267,13 @@ int ImageDescriptor_t::_getEncodedSizeNoHash() const
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, this->landmark_scores_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __float_encoded_array_size(NULL, this->image_desc_size);
-    enc_size += __float_encoded_array_size(NULL, 1);
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __int8_t_encoded_array_size(NULL, this->image_desc_size_int8);
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     enc_size += __byte_encoded_array_size(NULL, this->image_size);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += this->pose_drone._getEncodedSizeNoHash();
-    enc_size += this->camera_extrinsic._getEncodedSizeNoHash();
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
     for (int a0 = 0; a0 < this->landmark_num; a0++) {
         enc_size += this->landmarks[a0]._getEncodedSizeNoHash();
     }
-    enc_size += __boolean_encoded_array_size(NULL, 1);
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
@@ -441,10 +285,8 @@ uint64_t ImageDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptor_t::getHash };
 
-    uint64_t hash = 0xc5b2567ef3dbd5beLL +
-         Time_t::_computeHash(&cp) +
-         Pose_t::_computeHash(&cp) +
-         Pose_t::_computeHash(&cp) +
+    uint64_t hash = 0x02a09ee1712d1401LL +
+         ImageDescriptorHeader_t::_computeHash(&cp) +
          Landmark_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);
