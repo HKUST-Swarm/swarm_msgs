@@ -45,6 +45,8 @@ class ImageDescriptorHeader_t
 
         int8_t     prevent_adding_db;
 
+        int8_t     is_keyframe;
+
         int64_t    msg_id;
 
         int64_t    frame_id;
@@ -198,6 +200,9 @@ int ImageDescriptorHeader_t::_encodeNoHash(void *buf, int offset, int maxlen) co
     tlen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->prevent_adding_db, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->is_keyframe, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -271,6 +276,9 @@ int ImageDescriptorHeader_t::_decodeNoHash(const void *buf, int offset, int maxl
     tlen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->prevent_adding_db, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->is_keyframe, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->msg_id, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -311,6 +319,7 @@ int ImageDescriptorHeader_t::_getEncodedSizeNoHash() const
     enc_size += this->pose_drone._getEncodedSizeNoHash();
     enc_size += this->camera_extrinsic._getEncodedSizeNoHash();
     enc_size += __boolean_encoded_array_size(NULL, 1);
+    enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
@@ -329,7 +338,7 @@ uint64_t ImageDescriptorHeader_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, ImageDescriptorHeader_t::getHash };
 
-    uint64_t hash = 0xa18d8e8b8bc63894LL +
+    uint64_t hash = 0xabc4c00313a30915LL +
          Time_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +

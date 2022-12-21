@@ -78,6 +78,7 @@ class LandmarkCompact_t(object):
         return self
     _decode_one = staticmethod(_decode_one)
 
+    _hash = None
     def _get_hash_recursive(parents):
         if LandmarkCompact_t in parents: return 0
         newparents = parents + [LandmarkCompact_t]
@@ -92,8 +93,4 @@ class LandmarkCompact_t(object):
             LandmarkCompact_t._packed_fingerprint = struct.pack(">Q", LandmarkCompact_t._get_hash_recursive([]))
         return LandmarkCompact_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
-
-    def get_hash(self):
-        """Get the LCM hash of the struct"""
-        return struct.unpack(">Q", LandmarkCompact_t._get_packed_fingerprint())[0]
 

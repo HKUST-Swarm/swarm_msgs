@@ -47,6 +47,7 @@ class Vector_t(object):
         return self
     _decode_one = staticmethod(_decode_one)
 
+    _hash = None
     def _get_hash_recursive(parents):
         if Vector_t in parents: return 0
         tmphash = (0x4a29a0563145d11e) & 0xffffffffffffffff
@@ -60,8 +61,4 @@ class Vector_t(object):
             Vector_t._packed_fingerprint = struct.pack(">Q", Vector_t._get_hash_recursive([]))
         return Vector_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
-
-    def get_hash(self):
-        """Get the LCM hash of the struct"""
-        return struct.unpack(">Q", Vector_t._get_packed_fingerprint())[0]
 

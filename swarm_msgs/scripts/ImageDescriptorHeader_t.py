@@ -16,11 +16,11 @@ import Pose_t
 import SlidingWindow_t
 
 class ImageDescriptorHeader_t(object):
-    __slots__ = ["timestamp", "drone_id", "reference_frame_id", "matched_frame", "matched_drone", "is_lazy_frame", "image_desc_size", "image_desc", "image_desc_size_int8", "image_desc_int8", "pose_drone", "camera_extrinsic", "prevent_adding_db", "msg_id", "frame_id", "feature_num", "camera_index", "camera_id", "cur_td", "sld_win_status"]
+    __slots__ = ["timestamp", "drone_id", "reference_frame_id", "matched_frame", "matched_drone", "is_lazy_frame", "image_desc_size", "image_desc", "image_desc_size_int8", "image_desc_int8", "pose_drone", "camera_extrinsic", "prevent_adding_db", "is_keyframe", "msg_id", "frame_id", "feature_num", "camera_index", "camera_id", "cur_td", "sld_win_status"]
 
-    __typenames__ = ["Time_t", "int32_t", "int32_t", "int64_t", "int32_t", "boolean", "int32_t", "float", "int32_t", "int8_t", "Pose_t", "Pose_t", "boolean", "int64_t", "int64_t", "int32_t", "int32_t", "int32_t", "float", "SlidingWindow_t"]
+    __typenames__ = ["Time_t", "int32_t", "int32_t", "int64_t", "int32_t", "boolean", "int32_t", "float", "int32_t", "int8_t", "Pose_t", "Pose_t", "boolean", "boolean", "int64_t", "int64_t", "int32_t", "int32_t", "int32_t", "float", "SlidingWindow_t"]
 
-    __dimensions__ = [None, None, None, None, None, None, None, ["image_desc_size"], None, ["image_desc_size_int8"], None, None, None, None, None, None, None, None, None, None]
+    __dimensions__ = [None, None, None, None, None, None, None, ["image_desc_size"], None, ["image_desc_size_int8"], None, None, None, None, None, None, None, None, None, None, None]
 
     def __init__(self):
         self.timestamp = Time_t()
@@ -36,6 +36,7 @@ class ImageDescriptorHeader_t(object):
         self.pose_drone = Pose_t()
         self.camera_extrinsic = Pose_t()
         self.prevent_adding_db = False
+        self.is_keyframe = False
         self.msg_id = 0
         self.frame_id = 0
         self.feature_num = 0
@@ -61,7 +62,7 @@ class ImageDescriptorHeader_t(object):
         self.pose_drone._encode_one(buf)
         assert self.camera_extrinsic._get_packed_fingerprint() == Pose_t._get_packed_fingerprint()
         self.camera_extrinsic._encode_one(buf)
-        buf.write(struct.pack(">bqqiiif", self.prevent_adding_db, self.msg_id, self.frame_id, self.feature_num, self.camera_index, self.camera_id, self.cur_td))
+        buf.write(struct.pack(">bbqqiiif", self.prevent_adding_db, self.is_keyframe, self.msg_id, self.frame_id, self.feature_num, self.camera_index, self.camera_id, self.cur_td))
         assert self.sld_win_status._get_packed_fingerprint() == SlidingWindow_t._get_packed_fingerprint()
         self.sld_win_status._encode_one(buf)
 
@@ -87,15 +88,17 @@ class ImageDescriptorHeader_t(object):
         self.pose_drone = Pose_t._decode_one(buf)
         self.camera_extrinsic = Pose_t._decode_one(buf)
         self.prevent_adding_db = bool(struct.unpack('b', buf.read(1))[0])
+        self.is_keyframe = bool(struct.unpack('b', buf.read(1))[0])
         self.msg_id, self.frame_id, self.feature_num, self.camera_index, self.camera_id, self.cur_td = struct.unpack(">qqiiif", buf.read(32))
         self.sld_win_status = SlidingWindow_t._decode_one(buf)
         return self
     _decode_one = staticmethod(_decode_one)
 
+    _hash = None
     def _get_hash_recursive(parents):
         if ImageDescriptorHeader_t in parents: return 0
         newparents = parents + [ImageDescriptorHeader_t]
-        tmphash = (0xa18d8e8b8bc63894+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ SlidingWindow_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0xabc4c00313a30915+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ SlidingWindow_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)
@@ -106,8 +109,4 @@ class ImageDescriptorHeader_t(object):
             ImageDescriptorHeader_t._packed_fingerprint = struct.pack(">Q", ImageDescriptorHeader_t._get_hash_recursive([]))
         return ImageDescriptorHeader_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
-
-    def get_hash(self):
-        """Get the LCM hash of the struct"""
-        return struct.unpack(">Q", ImageDescriptorHeader_t._get_packed_fingerprint())[0]
 
