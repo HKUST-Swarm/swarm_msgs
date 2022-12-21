@@ -110,6 +110,7 @@ class ImageArrayDescriptor_t(object):
         return self
     _decode_one = staticmethod(_decode_one)
 
+    _hash = None
     def _get_hash_recursive(parents):
         if ImageArrayDescriptor_t in parents: return 0
         newparents = parents + [ImageArrayDescriptor_t]
@@ -124,8 +125,4 @@ class ImageArrayDescriptor_t(object):
             ImageArrayDescriptor_t._packed_fingerprint = struct.pack(">Q", ImageArrayDescriptor_t._get_hash_recursive([]))
         return ImageArrayDescriptor_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
-
-    def get_hash(self):
-        """Get the LCM hash of the struct"""
-        return struct.unpack(">Q", ImageArrayDescriptor_t._get_packed_fingerprint())[0]
 

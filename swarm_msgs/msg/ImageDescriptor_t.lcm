@@ -97,6 +97,7 @@ struct ImageDescriptorHeader_t {
     Pose_t pose_drone;
     Pose_t camera_extrinsic;
     boolean prevent_adding_db;
+    boolean is_keyframe;
     int64_t msg_id;
     int64_t frame_id;
     int32_t feature_num;
