@@ -56,7 +56,6 @@ class LoopInliers_t(object):
         return self
     _decode_one = staticmethod(_decode_one)
 
-    _hash = None
     def _get_hash_recursive(parents):
         if LoopInliers_t in parents: return 0
         newparents = parents + [LoopInliers_t]
@@ -71,4 +70,8 @@ class LoopInliers_t(object):
             LoopInliers_t._packed_fingerprint = struct.pack(">Q", LoopInliers_t._get_hash_recursive([]))
         return LoopInliers_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
+
+    def get_hash(self):
+        """Get the LCM hash of the struct"""
+        return struct.unpack(">Q", LoopInliers_t._get_packed_fingerprint())[0]
 

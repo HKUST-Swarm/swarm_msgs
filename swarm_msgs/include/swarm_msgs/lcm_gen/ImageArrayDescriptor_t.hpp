@@ -14,8 +14,8 @@
 #include "Pose_t.hpp"
 #include "ImageDescriptor_t.hpp"
 #include "IMUData_t.hpp"
-#include "Point3d_t.hpp"
-#include "Point3d_t.hpp"
+#include "Point3f_t.hpp"
+#include "Point3f_t.hpp"
 #include "SlidingWindow_t.hpp"
 
 
@@ -54,9 +54,9 @@ class ImageArrayDescriptor_t
 
         std::vector< IMUData_t > imu_buf;
 
-        Point3d_t  Ba;
+        Point3f_t  Ba;
 
-        Point3d_t  Bg;
+        Point3f_t  Bg;
 
         SlidingWindow_t sld_win_status;
 
@@ -349,8 +349,8 @@ uint64_t ImageArrayDescriptor_t::_computeHash(const __lcm_hash_ptr *p)
          Pose_t::_computeHash(&cp) +
          ImageDescriptor_t::_computeHash(&cp) +
          IMUData_t::_computeHash(&cp) +
-         Point3d_t::_computeHash(&cp) +
-         Point3d_t::_computeHash(&cp) +
+         Point3f_t::_computeHash(&cp) +
+         Point3f_t::_computeHash(&cp) +
          SlidingWindow_t::_computeHash(&cp);
 
     return (hash<<1) + ((hash>>63)&1);

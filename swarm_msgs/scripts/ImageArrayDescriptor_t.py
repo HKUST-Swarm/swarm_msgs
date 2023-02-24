@@ -13,7 +13,7 @@ import ImageDescriptor_t
 
 import IMUData_t
 
-import Point3d_t
+import Point3f_t
 
 import Time_t
 
@@ -24,7 +24,7 @@ import SlidingWindow_t
 class ImageArrayDescriptor_t(object):
     __slots__ = ["msg_id", "frame_id", "matched_frame", "matched_drone", "image_num", "reference_frame_id", "prevent_adding_db", "landmark_num", "drone_id", "is_lazy_frame", "timestamp", "pose_drone", "is_keyframe", "images", "imu_buf_size", "imu_buf", "Ba", "Bg", "sld_win_status", "cur_td"]
 
-    __typenames__ = ["int64_t", "int64_t", "int64_t", "int32_t", "int32_t", "int32_t", "boolean", "int32_t", "int32_t", "int32_t", "Time_t", "Pose_t", "boolean", "ImageDescriptor_t", "int32_t", "IMUData_t", "Point3d_t", "Point3d_t", "SlidingWindow_t", "float"]
+    __typenames__ = ["int64_t", "int64_t", "int64_t", "int32_t", "int32_t", "int32_t", "boolean", "int32_t", "int32_t", "int32_t", "Time_t", "Pose_t", "boolean", "ImageDescriptor_t", "int32_t", "IMUData_t", "Point3f_t", "Point3f_t", "SlidingWindow_t", "float"]
 
     __dimensions__ = [None, None, None, None, None, None, None, None, None, None, None, None, None, ["image_num"], None, ["imu_buf_size"], None, None, None, None]
 
@@ -45,8 +45,8 @@ class ImageArrayDescriptor_t(object):
         self.images = []
         self.imu_buf_size = 0
         self.imu_buf = []
-        self.Ba = Point3d_t()
-        self.Bg = Point3d_t()
+        self.Ba = Point3f_t()
+        self.Bg = Point3f_t()
         self.sld_win_status = SlidingWindow_t()
         self.cur_td = 0.0
 
@@ -70,9 +70,9 @@ class ImageArrayDescriptor_t(object):
         for i0 in range(self.imu_buf_size):
             assert self.imu_buf[i0]._get_packed_fingerprint() == IMUData_t._get_packed_fingerprint()
             self.imu_buf[i0]._encode_one(buf)
-        assert self.Ba._get_packed_fingerprint() == Point3d_t._get_packed_fingerprint()
+        assert self.Ba._get_packed_fingerprint() == Point3f_t._get_packed_fingerprint()
         self.Ba._encode_one(buf)
-        assert self.Bg._get_packed_fingerprint() == Point3d_t._get_packed_fingerprint()
+        assert self.Bg._get_packed_fingerprint() == Point3f_t._get_packed_fingerprint()
         self.Bg._encode_one(buf)
         assert self.sld_win_status._get_packed_fingerprint() == SlidingWindow_t._get_packed_fingerprint()
         self.sld_win_status._encode_one(buf)
@@ -103,18 +103,17 @@ class ImageArrayDescriptor_t(object):
         self.imu_buf = []
         for i0 in range(self.imu_buf_size):
             self.imu_buf.append(IMUData_t._decode_one(buf))
-        self.Ba = Point3d_t._decode_one(buf)
-        self.Bg = Point3d_t._decode_one(buf)
+        self.Ba = Point3f_t._decode_one(buf)
+        self.Bg = Point3f_t._decode_one(buf)
         self.sld_win_status = SlidingWindow_t._decode_one(buf)
         self.cur_td = struct.unpack(">f", buf.read(4))[0]
         return self
     _decode_one = staticmethod(_decode_one)
 
-    _hash = None
     def _get_hash_recursive(parents):
         if ImageArrayDescriptor_t in parents: return 0
         newparents = parents + [ImageArrayDescriptor_t]
-        tmphash = (0xf3adad9f3e1acdc0+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ ImageDescriptor_t._get_hash_recursive(newparents)+ IMUData_t._get_hash_recursive(newparents)+ Point3d_t._get_hash_recursive(newparents)+ Point3d_t._get_hash_recursive(newparents)+ SlidingWindow_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
+        tmphash = (0xf3adad9f3e1acdc0+ Time_t._get_hash_recursive(newparents)+ Pose_t._get_hash_recursive(newparents)+ ImageDescriptor_t._get_hash_recursive(newparents)+ IMUData_t._get_hash_recursive(newparents)+ Point3f_t._get_hash_recursive(newparents)+ Point3f_t._get_hash_recursive(newparents)+ SlidingWindow_t._get_hash_recursive(newparents)) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)
@@ -125,4 +124,8 @@ class ImageArrayDescriptor_t(object):
             ImageArrayDescriptor_t._packed_fingerprint = struct.pack(">Q", ImageArrayDescriptor_t._get_hash_recursive([]))
         return ImageArrayDescriptor_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
+
+    def get_hash(self):
+        """Get the LCM hash of the struct"""
+        return struct.unpack(">Q", ImageArrayDescriptor_t._get_packed_fingerprint())[0]
 

@@ -14,9 +14,9 @@
 class Pose_t
 {
     public:
-        double     position[3];
+        float      position[3];
 
-        double     orientation[4];
+        float      orientation[4];
 
     public:
         /**
@@ -114,10 +114,10 @@ int Pose_t::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
 
-    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->position[0], 3);
+    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->position[0], 3);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->orientation[0], 4);
+    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->orientation[0], 4);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -127,10 +127,10 @@ int Pose_t::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
-    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->position[0], 3);
+    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->position[0], 3);
     if(tlen < 0) return tlen; else pos += tlen;
 
-    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->orientation[0], 4);
+    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->orientation[0], 4);
     if(tlen < 0) return tlen; else pos += tlen;
 
     return pos;
@@ -139,14 +139,14 @@ int Pose_t::_decodeNoHash(const void *buf, int offset, int maxlen)
 int Pose_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
-    enc_size += __double_encoded_array_size(NULL, 3);
-    enc_size += __double_encoded_array_size(NULL, 4);
+    enc_size += __float_encoded_array_size(NULL, 3);
+    enc_size += __float_encoded_array_size(NULL, 4);
     return enc_size;
 }
 
 uint64_t Pose_t::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0xcc9fb545e18d99b3LL;
+    uint64_t hash = 0xaff8430a89bc6633LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

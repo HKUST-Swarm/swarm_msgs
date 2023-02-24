@@ -17,7 +17,7 @@ class Vector_t
     public:
         int32_t    size;
 
-        std::vector< double > data;
+        std::vector< float > data;
 
     public:
         /**
@@ -119,7 +119,7 @@ int Vector_t::_encodeNoHash(void *buf, int offset, int maxlen) const
     if(tlen < 0) return tlen; else pos += tlen;
 
     if(this->size > 0) {
-        tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->data[0], this->size);
+        tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->data[0], this->size);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -135,7 +135,7 @@ int Vector_t::_decodeNoHash(const void *buf, int offset, int maxlen)
 
     if(this->size) {
         this->data.resize(this->size);
-        tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->data[0], this->size);
+        tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->data[0], this->size);
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
@@ -146,13 +146,13 @@ int Vector_t::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
     enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, this->size);
+    enc_size += __float_encoded_array_size(NULL, this->size);
     return enc_size;
 }
 
 uint64_t Vector_t::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0x4a29a0563145d11eLL;
+    uint64_t hash = 0xd451d6603ebed71cLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

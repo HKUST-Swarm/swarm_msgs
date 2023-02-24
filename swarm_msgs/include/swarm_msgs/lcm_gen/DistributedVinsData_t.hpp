@@ -13,7 +13,6 @@
 #include "Time_t.hpp"
 #include "Pose_t.hpp"
 #include "Pose_t.hpp"
-#include "Pose_t.hpp"
 
 
 class DistributedVinsData_t
@@ -36,12 +35,6 @@ class DistributedVinsData_t
         std::vector< int64_t > cam_ids;
 
         std::vector< Pose_t > extrinsic;
-
-        int32_t    remote_drone_num;
-
-        std::vector< int64_t > remote_drone_ids;
-
-        std::vector< Pose_t > relative_coordinates;
 
         int64_t    solver_token;
 
@@ -178,19 +171,6 @@ int DistributedVinsData_t::_encodeNoHash(void *buf, int offset, int maxlen) cons
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_encode_array(buf, offset + pos, maxlen - pos, &this->remote_drone_num, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->remote_drone_num > 0) {
-        tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->remote_drone_ids[0], this->remote_drone_num);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    for (int a0 = 0; a0 < this->remote_drone_num; a0++) {
-        tlen = this->relative_coordinates[a0]._encodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
     tlen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->solver_token, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -251,25 +231,6 @@ int DistributedVinsData_t::_decodeNoHash(const void *buf, int offset, int maxlen
         if(tlen < 0) return tlen; else pos += tlen;
     }
 
-    tlen = __int32_t_decode_array(buf, offset + pos, maxlen - pos, &this->remote_drone_num, 1);
-    if(tlen < 0) return tlen; else pos += tlen;
-
-    if(this->remote_drone_num) {
-        this->remote_drone_ids.resize(this->remote_drone_num);
-        tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->remote_drone_ids[0], this->remote_drone_num);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
-    try {
-        this->relative_coordinates.resize(this->remote_drone_num);
-    } catch (...) {
-        return -1;
-    }
-    for (int a0 = 0; a0 < this->remote_drone_num; a0++) {
-        tlen = this->relative_coordinates[a0]._decodeNoHash(buf, offset + pos, maxlen - pos);
-        if(tlen < 0) return tlen; else pos += tlen;
-    }
-
     tlen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->solver_token, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -295,11 +256,6 @@ int DistributedVinsData_t::_getEncodedSizeNoHash() const
     for (int a0 = 0; a0 < this->camera_num; a0++) {
         enc_size += this->extrinsic[a0]._getEncodedSizeNoHash();
     }
-    enc_size += __int32_t_encoded_array_size(NULL, 1);
-    enc_size += __int64_t_encoded_array_size(NULL, this->remote_drone_num);
-    for (int a0 = 0; a0 < this->remote_drone_num; a0++) {
-        enc_size += this->relative_coordinates[a0]._getEncodedSizeNoHash();
-    }
     enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __int32_t_encoded_array_size(NULL, 1);
     return enc_size;
@@ -313,9 +269,8 @@ uint64_t DistributedVinsData_t::_computeHash(const __lcm_hash_ptr *p)
             return 0;
     const __lcm_hash_ptr cp = { p, DistributedVinsData_t::getHash };
 
-    uint64_t hash = 0xba17fbf89d93c3baLL +
+    uint64_t hash = 0xd1d5ab5fbb01f070LL +
          Time_t::_computeHash(&cp) +
-         Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp) +
          Pose_t::_computeHash(&cp);
 

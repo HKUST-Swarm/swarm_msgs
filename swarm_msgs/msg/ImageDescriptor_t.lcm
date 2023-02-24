@@ -1,6 +1,6 @@
 struct Pose_t {
-    double   position[3];
-    double   orientation[4]; 
+    float   position[3];
+    float   orientation[4]; 
 }
 
 struct Point2d_t {
@@ -143,8 +143,8 @@ struct ImageArrayDescriptor_t {
     ImageDescriptor_t images[image_num];
     int32_t imu_buf_size;
     IMUData_t imu_buf[imu_buf_size];
-    Point3d_t Ba;
-    Point3d_t Bg;
+    Point3f_t Ba;
+    Point3f_t Bg;
     SlidingWindow_t sld_win_status;
     float cur_td;
 }
@@ -204,9 +204,6 @@ struct DistributedVinsData_t {
     int32_t camera_num;
     int64_t cam_ids[camera_num];
     Pose_t extrinsic[camera_num];
-    int32_t remote_drone_num;
-    int64_t remote_drone_ids[remote_drone_num];
-    Pose_t relative_coordinates[remote_drone_num];
     int64_t solver_token;
     int32_t iteration_count;
 }
@@ -220,7 +217,7 @@ struct DistributedSync_t {
 
 struct Vector_t {
     int32_t size;
-    double data[size];
+    float data[size];
 }
 
 struct DistributedPGOData_t {

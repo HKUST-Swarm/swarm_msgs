@@ -12,7 +12,7 @@ import struct
 class Pose_t(object):
     __slots__ = ["position", "orientation"]
 
-    __typenames__ = ["double", "double"]
+    __typenames__ = ["float", "float"]
 
     __dimensions__ = [[3], [4]]
 
@@ -27,8 +27,8 @@ class Pose_t(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        buf.write(struct.pack('>3d', *self.position[:3]))
-        buf.write(struct.pack('>4d', *self.orientation[:4]))
+        buf.write(struct.pack('>3f', *self.position[:3]))
+        buf.write(struct.pack('>4f', *self.orientation[:4]))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -42,15 +42,14 @@ class Pose_t(object):
 
     def _decode_one(buf):
         self = Pose_t()
-        self.position = struct.unpack('>3d', buf.read(24))
-        self.orientation = struct.unpack('>4d', buf.read(32))
+        self.position = struct.unpack('>3f', buf.read(12))
+        self.orientation = struct.unpack('>4f', buf.read(16))
         return self
     _decode_one = staticmethod(_decode_one)
 
-    _hash = None
     def _get_hash_recursive(parents):
         if Pose_t in parents: return 0
-        tmphash = (0xcc9fb545e18d99b3) & 0xffffffffffffffff
+        tmphash = (0xaff8430a89bc6633) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)
@@ -61,4 +60,8 @@ class Pose_t(object):
             Pose_t._packed_fingerprint = struct.pack(">Q", Pose_t._get_hash_recursive([]))
         return Pose_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
+
+    def get_hash(self):
+        """Get the LCM hash of the struct"""
+        return struct.unpack(">Q", Pose_t._get_packed_fingerprint())[0]
 

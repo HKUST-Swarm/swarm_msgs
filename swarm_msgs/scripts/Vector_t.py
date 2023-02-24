@@ -12,7 +12,7 @@ import struct
 class Vector_t(object):
     __slots__ = ["size", "data"]
 
-    __typenames__ = ["int32_t", "double"]
+    __typenames__ = ["int32_t", "float"]
 
     __dimensions__ = [None, ["size"]]
 
@@ -28,7 +28,7 @@ class Vector_t(object):
 
     def _encode_one(self, buf):
         buf.write(struct.pack(">i", self.size))
-        buf.write(struct.pack('>%dd' % self.size, *self.data[:self.size]))
+        buf.write(struct.pack('>%df' % self.size, *self.data[:self.size]))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -43,14 +43,13 @@ class Vector_t(object):
     def _decode_one(buf):
         self = Vector_t()
         self.size = struct.unpack(">i", buf.read(4))[0]
-        self.data = struct.unpack('>%dd' % self.size, buf.read(self.size * 8))
+        self.data = struct.unpack('>%df' % self.size, buf.read(self.size * 4))
         return self
     _decode_one = staticmethod(_decode_one)
 
-    _hash = None
     def _get_hash_recursive(parents):
         if Vector_t in parents: return 0
-        tmphash = (0x4a29a0563145d11e) & 0xffffffffffffffff
+        tmphash = (0xd451d6603ebed71c) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)
@@ -61,4 +60,8 @@ class Vector_t(object):
             Vector_t._packed_fingerprint = struct.pack(">Q", Vector_t._get_hash_recursive([]))
         return Vector_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
+
+    def get_hash(self):
+        """Get the LCM hash of the struct"""
+        return struct.unpack(">Q", Vector_t._get_packed_fingerprint())[0]
 

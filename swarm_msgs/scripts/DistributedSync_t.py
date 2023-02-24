@@ -52,7 +52,6 @@ class DistributedSync_t(object):
         return self
     _decode_one = staticmethod(_decode_one)
 
-    _hash = None
     def _get_hash_recursive(parents):
         if DistributedSync_t in parents: return 0
         newparents = parents + [DistributedSync_t]
@@ -67,4 +66,8 @@ class DistributedSync_t(object):
             DistributedSync_t._packed_fingerprint = struct.pack(">Q", DistributedSync_t._get_hash_recursive([]))
         return DistributedSync_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
+
+    def get_hash(self):
+        """Get the LCM hash of the struct"""
+        return struct.unpack(">Q", DistributedSync_t._get_packed_fingerprint())[0]
 

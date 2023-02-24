@@ -85,7 +85,6 @@ class LoopEdge_t(object):
         return self
     _decode_one = staticmethod(_decode_one)
 
-    _hash = None
     def _get_hash_recursive(parents):
         if LoopEdge_t in parents: return 0
         newparents = parents + [LoopEdge_t]
@@ -100,4 +99,8 @@ class LoopEdge_t(object):
             LoopEdge_t._packed_fingerprint = struct.pack(">Q", LoopEdge_t._get_hash_recursive([]))
         return LoopEdge_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
+
+    def get_hash(self):
+        """Get the LCM hash of the struct"""
+        return struct.unpack(">Q", LoopEdge_t._get_packed_fingerprint())[0]
 

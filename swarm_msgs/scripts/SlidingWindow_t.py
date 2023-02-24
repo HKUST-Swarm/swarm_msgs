@@ -54,7 +54,6 @@ class SlidingWindow_t(object):
         return self
     _decode_one = staticmethod(_decode_one)
 
-    _hash = None
     def _get_hash_recursive(parents):
         if SlidingWindow_t in parents: return 0
         newparents = parents + [SlidingWindow_t]
@@ -69,4 +68,8 @@ class SlidingWindow_t(object):
             SlidingWindow_t._packed_fingerprint = struct.pack(">Q", SlidingWindow_t._get_hash_recursive([]))
         return SlidingWindow_t._packed_fingerprint
     _get_packed_fingerprint = staticmethod(_get_packed_fingerprint)
+
+    def get_hash(self):
+        """Get the LCM hash of the struct"""
+        return struct.unpack(">Q", SlidingWindow_t._get_packed_fingerprint())[0]
 
