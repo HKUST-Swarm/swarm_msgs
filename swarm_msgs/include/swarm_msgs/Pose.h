@@ -147,6 +147,19 @@ public:
     }
 
     template <typename T>
+    void to_vector(const std::shared_ptr<T>& ret) const {
+        assert(ret && "Pose::to_vector nullptr error");
+        ret.get()[3] = T(attitude.x());
+        ret.get()[4] = T(attitude.y());
+        ret.get()[5] = T(attitude.z());
+        ret.get()[6] = T(attitude.w());
+
+        ret.get()[0] = T(position.x());
+        ret.get()[1] = T(position.y());
+        ret.get()[2] = T(position.z());
+    }
+
+    template <typename T>
     void from_vector(const T v[], bool xyzyaw = false) {
         if (xyzyaw) {
             this->attitude = AngleAxisd(v[3], Vector3d::UnitZ());
@@ -164,11 +177,38 @@ public:
     }
 
     template <typename T>
+    void from_vector(const std::shared_ptr<T>& v, bool xyzyaw = false) {
+        assert(v && "Pose::from_vector nullptr error");
+        if (xyzyaw) {
+            this->attitude = AngleAxisd(v.get()[3], Vector3d::UnitZ());
+        } else {
+            attitude.x() = v.get()[3];
+            attitude.y() = v.get()[4];
+            attitude.z() = v.get()[5];
+            attitude.w() = v.get()[6];
+        }
+        position.x() = v.get()[0];
+        position.y() = v.get()[1];
+        position.z() = v.get()[2];
+        attitude.normalize();
+        update_yaw();
+    }
+
+    template <typename T>
     void to_vector_xyzyaw(T ret[]) const {
         ret[0] = T(position.x());
         ret[1] = T(position.y());
         ret[2] = T(position.z());
         ret[3] = T(_yaw);
+    }
+
+    template <typename T>
+    void to_vector_xyzyaw(const std::shared_ptr<T>& ret) const {
+        assert(ret && "Pose::to_vector_xyzyaw nullptr error");
+        ret.get()[0] = T(position.x());
+        ret.get()[1] = T(position.y());
+        ret.get()[2] = T(position.z());
+        ret.get()[3] = T(_yaw);
     }
 
     template <typename T>
@@ -266,6 +306,24 @@ public:
     }
 
     Pose(const double v[], bool xyzyaw = false) {
+        if (xyzyaw) {
+            this->attitude = AngleAxisd(v[3], Vector3d::UnitZ());
+        } else {
+            attitude.x() = v[3];
+            attitude.y() = v[4];
+            attitude.z() = v[5];
+            attitude.w() = v[6];
+        }
+        position.x() = v[0];
+        position.y() = v[1];
+        position.z() = v[2];
+        attitude.normalize();
+        update_yaw();
+    }
+
+    template <typename T>
+    Pose(const std::shared_ptr<T> ptr, bool xyzyaw = false) {
+        auto v = ptr.get();
         if (xyzyaw) {
             this->attitude = AngleAxisd(v[3], Vector3d::UnitZ());
         } else {
