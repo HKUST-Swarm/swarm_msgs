@@ -1,55 +1,31 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(swarmtal_msgs)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  message_generation
-  nav_msgs
-  sensor_msgs
-  roscpp
-  rosmsg
-  rospy
-)
+find_package(ament_cmake REQUIRED)
 
-## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  drone_pos_ctrl_cmd.msg
-  drone_pos_control_state.msg
-  drone_commander_state.msg
-  drone_onboard_command.msg
-)
+find_package(rosidl_default_generators REQUIRED)
 
-## Generate added messages and services with any dependencies listed here
-generate_messages(
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/DronePosCtrlCmd.msg"
+  "msg/DronePosControlState.msg"
+  "msg/DroneCommanderState.msg"
+  "msg/DroneOnboardCommand.msg"
   DEPENDENCIES
-  nav_msgs 
-  geometry_msgs
-  std_msgs
-  sensor_msgs
+    geometry_msgs
+    nav_msgs
+    sensor_msgs
+    std_msgs
 )
 
+ament_export_dependencies(rosidl_default_runtime)
 
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES swarmtal_msgs
-#  CATKIN_DEPENDS geometry_msgs messag_generation nav_msgs roscpp rosmsg rospy
-#  DEPENDS system_lib
-)
-
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+ament_package()
