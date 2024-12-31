@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 uint32 drone_id
 bool active
 int32 quality

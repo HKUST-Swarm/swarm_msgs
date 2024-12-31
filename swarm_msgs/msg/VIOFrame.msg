@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 int32 drone_id
 int32 reference_frame_id
 int64 frame_id

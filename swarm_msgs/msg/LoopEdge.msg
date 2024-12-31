@@ -1,5 +1,5 @@
-time ts_a
-time ts_b
+builtin_interfaces/Time ts_a
+builtin_interfaces/Time ts_b
 uint64 drone_id_a
 uint64 drone_id_b
 uint64 keyframe_id_a

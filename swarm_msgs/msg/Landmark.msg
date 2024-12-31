@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 int32 frame_id
 int32 landmark_id
 int32 camera_index

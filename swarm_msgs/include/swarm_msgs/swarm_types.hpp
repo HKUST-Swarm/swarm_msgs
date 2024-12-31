@@ -9,8 +9,8 @@
 #include <exception>
 #include <set>
 #include <swarm_msgs/LoopEdge.h>
-#include <swarm_msgs/node_detected_xyzyaw.h>
-#include <swarm_msgs/node_detected.h>
+#include <swarm_msgs/NodeDetectedXyzYaw.h>
+#include <swarm_msgs/NodeDetected.h>
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>

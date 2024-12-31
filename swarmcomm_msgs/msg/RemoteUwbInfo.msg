@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 uint32 sys_time
 uint32 remote_node_num
 uint32 self_id

@@ -1,70 +1,50 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(swarm_msgs)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  message_runtime
-  nav_msgs
-  geometry_msgs
-  std_msgs
-  sensor_msgs
-  swarmtal_msgs
-)
+find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-## Generate messages in the 'msg' folder
-add_message_files(
-        FILES
-        swarm_fused.msg
-        swarm_fused_relative.msg
-        swarm_remote_command.msg
-        swarm_drone_source_data.msg
-        node_detected_xyzyaw.msg
-        node_frame.msg
-        swarm_frame.msg
-        node_detected.msg
-        swarm_detected.msg
-        swarm_drone_basecoor.msg
-        ImageDescriptor.msg
-        LoopEdge.msg
-        LoopEdges.msg
-        Landmark.msg
-        DroneTraj.msg
-        VIOFrame.msg
-        ImageArrayDescriptor.msg
-        DPGOData.msg
-        DPGOSignal.msg
-)
+find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(swarmtal_msgs REQUIRED)
 
-## Generate added messages and services with any dependencies listed here
-generate_messages(
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/SwarmFused.msg"
+  "msg/SwarmFusedRelative.msg"
+  "msg/SwarmRemoteCommand.msg"
+  "msg/SwarmDroneSourceData.msg"
+  "msg/NodeDetectedXyzYaw.msg"
+  "msg/NodeFrame.msg"
+  "msg/SwarmFrame.msg"
+  "msg/NodeDetected.msg"
+  "msg/SwarmDetected.msg"
+  "msg/SwarmDroneBasecoor.msg"
+  "msg/ImageDescriptor.msg"
+  "msg/LoopEdge.msg"
+  "msg/LoopEdges.msg"
+  "msg/Landmark.msg"
+  "msg/DroneTraj.msg"
+  "msg/VIOFrame.msg"
+  "msg/ImageArrayDescriptor.msg"
+  "msg/DPGOData.msg"
+  "msg/DPGOSignal.msg"
   DEPENDENCIES
-  nav_msgs 
-  geometry_msgs
-  std_msgs
-  sensor_msgs
-  swarmtal_msgs
+    std_msgs
+    nav_msgs
+    geometry_msgs
+    sensor_msgs
+    swarmtal_msgs
+    builtin_interfaces
 )
 
+# 4. 导出依赖
+ament_export_dependencies(rosidl_default_runtime)
 
-catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES swarm_msgs
-#  CATKIN_DEPENDS message_generation message_runtime nav_msgs odometry_msgs std_msgs
-)
-
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+# 5. 结束
+ament_package()

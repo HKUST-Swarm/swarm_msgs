@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 bool prevent_adding_db
 bool is_keyframe
 int32 landmark_num

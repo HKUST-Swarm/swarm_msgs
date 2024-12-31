@@ -1,8 +1,8 @@
 #pragma once
 #include "Pose.h"
 #include "base_types.hpp"
-#include <swarm_msgs/node_detected.h>
-#include <swarm_msgs/node_detected_xyzyaw.h>
+#include <swarm_msgs/NodeDetected.h>
+#include <swarm_msgs/NodeDetectedXyzYaw.h>
 #include <swarm_msgs/LoopEdge.h>
 #include "utils.hpp"
 
@@ -103,7 +103,7 @@ public:
         setCovariance(cov);
     }
 
-    LoopEdge(const swarm_msgs::node_detected & loc)  {
+    LoopEdge(const swarm_msgs::NodeDetected & loc)  {
         id = loc.id;
         id_a = loc.self_drone_id;
         id_b = loc.remote_drone_id;
@@ -349,7 +349,7 @@ public:
     Pose extrinsic; //Extrinsic from IMU to Cam
     Pose GC = Swarm::Pose(Vector3d(-0.06, 0, 0), Quaterniond::Identity()); //Extrinsic from IMU to GC(e.g. detection center.)
 
-    DroneDetection(const swarm_msgs::node_detected_xyzyaw & nd, bool _enable_dpose, Eigen::Vector3d _CG, bool _enable_depth = true):
+    DroneDetection(const swarm_msgs::NodeDetectedXyzYaw & nd, bool _enable_dpose, Eigen::Vector3d _CG, bool _enable_depth = true):
         enable_dpose(_enable_dpose)
     {
         id = nd.id;

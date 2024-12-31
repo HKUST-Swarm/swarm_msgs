@@ -1,4 +1,4 @@
-Header Header
+std_msgs/Header header
 
 geometry_msgs/Pose pose
 sensor_msgs/Imu imu_data

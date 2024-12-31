@@ -1,57 +1,31 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(swarmcomm_msgs)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  message_runtime
-  nav_msgs
-  geometry_msgs
-  std_msgs
-  sensor_msgs
-)
+find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-## Generate messages in the 'msg' folder
-add_message_files(
-    FILES
-    remote_uwb_info.msg
-    incoming_broadcast_data.msg
-    data_buffer.msg
-    drone_network_status.msg
-    swarm_network_status.msg
-)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
-
-## Generate added messages and services with any dependencies listed here
-generate_messages(
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/RemoteUwbInfo.msg"
+  "msg/IncomingBroadcastData.msg"
+  "msg/DataBuffer.msg"
+  "msg/DroneNetworkStatus.msg"
+  "msg/SwarmNetworkStatus.msg"
   DEPENDENCIES
-  nav_msgs 
-  geometry_msgs
-  std_msgs
-  sensor_msgs
+    geometry_msgs
+    nav_msgs
+    sensor_msgs
+    std_msgs
 )
 
+ament_export_dependencies(rosidl_default_runtime)
 
-catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES swarm_msgs
-#  CATKIN_DEPENDS message_generation message_runtime nav_msgs odometry_msgs std_msgs
-#  DEPENDS system_lib
-)
-
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
-
+ament_package()

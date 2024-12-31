@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 int32 drone_id
 int64 solver_token
 int32 iteration_count

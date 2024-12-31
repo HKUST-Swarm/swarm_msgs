@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 int32 drone_id #This is drone ID!!!
 uint64 keyframe_id
 
@@ -12,5 +12,5 @@ geometry_msgs/Quaternion quat
 bool vo_available
 int32[] dismap_ids
 float64[] dismap_dists
-node_detected_xyzyaw[] detected_xyzyaws
-node_detected[] detected
+NodeDetectedXyzYaw[] detected_xyzyaws
+NodeDetected[] detected
