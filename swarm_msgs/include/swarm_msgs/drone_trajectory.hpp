@@ -75,7 +75,7 @@ public:
         trajectory.push_back(pose);
         ts_trajectory.push_back(ts);
         frame_ids.push_back(frame_id);
-        stamp_trajectory.push_back(stamp.toSec());
+        stamp_trajectory.push_back(stamp.seconds());
         ts2index[ts] = ts_trajectory.size() - 1;
         id2index[frame_id] = frame_ids.size() - 1;
 

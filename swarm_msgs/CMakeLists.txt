@@ -46,5 +46,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 # 4. 导出依赖
 ament_export_dependencies(rosidl_default_runtime)
 
-# 5. 结束
+# Install the include directory
+install(DIRECTORY include/
+  DESTINATION include/swarm_msgs/
+)
+# 6. 结束
 ament_package()

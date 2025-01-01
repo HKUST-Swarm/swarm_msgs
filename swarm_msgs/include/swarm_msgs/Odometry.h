@@ -19,8 +19,8 @@ public:
         stamp(t), velocity(0., 0., 0.), angular_velocity(0., 0., 0.)
     {}
 
-    Odometry(const nav_msgs::Odometry & odom):
-        stamp(odom.header.stamp.toSec()),
+    Odometry(const nav_msgs::msg::Odometry & odom):
+        stamp(odom.header.stamp.seconds()),
         pose_(odom.pose.pose),
         velocity(odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z),
         angular_velocity(odom.twist.twist.angular.x, odom.twist.twist.angular.y, odom.twist.twist.angular.z)
@@ -48,8 +48,8 @@ public:
         return std::string(buf);
     }
 
-    nav_msgs::Odometry toRos() const {
-        nav_msgs::Odometry odom;
+    nav_msgs::msg::Odometry toRos() const {
+        nav_msgs::msg::Odometry odom;
         odom.header.stamp = ros::Time(stamp);
         odom.header.frame_id = "world";
         odom.pose.pose = pose_.toROS();
