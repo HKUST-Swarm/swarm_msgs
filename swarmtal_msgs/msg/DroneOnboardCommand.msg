@@ -31,6 +31,8 @@ uint32 CTRL_TASK_EXPROLARATION=30
 
 uint32 CTRL_END_MISSION=99
 
+int32 target_id
+int32 source_id
 
 uint32 command_type
 #For formation param1 is id

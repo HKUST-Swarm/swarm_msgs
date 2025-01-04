@@ -2,8 +2,9 @@ uint32 CTRL_INPUT_NONE=0
 uint32 CTRL_INPUT_RC=1
 uint32 CTRL_INPUT_ONBOARD=2
 
-uint32 ctrl_input_state
+uint32 drone_id
 
+uint32 ctrl_input_state
 
 uint32 FLIGHT_STATUS_IDLE=0 # Motor Stopped, on ground
 uint32 FLIGHT_STATUS_ARMED=1 # Armed, on ground
