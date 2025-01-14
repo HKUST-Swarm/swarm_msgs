@@ -1,0 +1,1 @@
+ocker run -it --rm -v./:/root/swarm_ws/src/swarm_msgs -v/Users/xuhao/develop/Swarm_Docker/modules/swarmtal_control:/root/swarm_ws/src/swarmtal_control  buaadocker.xuhao1.me/swarmtal_control_ros2:arm64 bash

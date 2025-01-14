@@ -17,6 +17,7 @@ find_package(std_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DronePosCtrlCmd.msg"
   "msg/DronePosControlState.msg"
+  "msg/DroneCommanderCoreState.msg"
   "msg/DroneCommanderState.msg"
   "msg/DroneOnboardCommand.msg"
   DEPENDENCIES
