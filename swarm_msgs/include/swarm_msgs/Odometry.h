@@ -42,9 +42,22 @@ public:
         stamp(0.), pose_(_pose), velocity(vel), angular_velocity(0., 0., 0.)
     {}
 
-    std::string toStr() const {
+    std::string toStr(bool format = false) const {
         char buf[256] = {0};
-        sprintf(buf, "Pose %s Vel %.2f %.2f %.2f", pose_.toStr().c_str(), velocity.x(), velocity.y(), velocity.z());
+        if (format)
+        {
+            auto position = pose_.pos();
+            auto attitude = pose_.att();
+            auto vel = velocity;
+            sprintf(buf, "%3.6f %3.6f %3.6f %3.6f %3.6f %3.6f %3.6f %3.6f %3.6f %3.6f",
+               position.x(), position.y(), position.z(),
+               attitude.w(), attitude.x(), attitude.y(), attitude.z(),
+                vel.x(), vel.y(), vel.z());
+        }
+        else
+        {
+            sprintf(buf, "Pose %s Vel %.2f %.2f %.2f", pose_.toStr().c_str(), velocity.x(), velocity.y(), velocity.z());
+        }
         return std::string(buf);
     }
 
