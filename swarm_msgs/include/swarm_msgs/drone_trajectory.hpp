@@ -383,7 +383,7 @@ public:
         }
     }
 
-    // Helper function for 2D alignment (x, y, yaw)
+    // Helper function for 2D alignment (x, y, yaw) with z translation
     Swarm::Pose align2D(const std::vector<Vector3d>& points_a, const std::vector<Vector3d>& points_b) {
         // Compute centroids
         Vector3d centroid_a = Vector3d::Zero();
@@ -424,12 +424,16 @@ public:
         // Convert 2D rotation to yaw angle
         double yaw = std::atan2(R(1, 0), R(0, 0));
         
-        // Calculate translation
+        // Calculate translation in x-y plane
         Vector2d t_2d = centroid_a.head<2>() - R * centroid_b.head<2>();
         
-        // Create transformation as Pose (with only x, y, and yaw)
-        Swarm::Pose transform(Vector3d(t_2d.x(), t_2d.y(), 0), 
+        // Calculate average z-difference directly using centroids
+        double z_translation = centroid_a.z() - centroid_b.z();
+        
+        // Create transformation as Pose (with x, y, z translation and yaw rotation)
+        Swarm::Pose transform(Vector3d(t_2d.x(), t_2d.y(), z_translation), 
                               Eigen::Quaterniond(Eigen::AngleAxisd(yaw, Vector3d::UnitZ())));
+        
         return transform;
     }
 
