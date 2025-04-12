@@ -309,5 +309,175 @@ public:
         }
         return traj;
     }
+
+    std::pair<bool, Swarm::Pose> alignTrajectory(const Swarm::DroneTrajectory & traj_b, 
+                               double min_xy_motion = 0.5, 
+                               double min_z_motion = 0.2) {
+        // Check if trajectories are empty
+        if (trajectory.empty() || traj_b.trajectory_size() == 0) {
+            ROS_WARN("Cannot align empty trajectories");
+            return std::make_pair(false, Swarm::Pose());
+        }
+        
+        // Find common timestamp range
+        TsType start_ts = std::max(ts_trajectory.front(), traj_b.ts_by_index(0));
+        TsType end_ts = std::min(ts_trajectory.back(), traj_b.ts_by_index(traj_b.trajectory_size()-1));
+        
+        if (start_ts >= end_ts) {
+            ROS_WARN("No overlapping timestamps between trajectories");
+            return std::make_pair(false, Swarm::Pose());
+        }
+        
+        // Collect matching point pairs
+        std::vector<Vector3d> points_a, points_b;
+        std::vector<TsType> common_ts;
+        
+        // Sample points at regular intervals across common timestamp range
+        int num_samples = 50; // Adjust as needed
+        TsType ts_step = (end_ts - start_ts) / num_samples;
+        
+        double total_xy_motion = 0.0;
+        double total_z_motion = 0.0;
+        Vector3d prev_pos_a;
+        bool first_point = true;
+        
+        for (int i = 0; i <= num_samples; i++) {
+            TsType curr_ts = start_ts + i * ts_step;
+            Swarm::Pose pose_a = pose_by_appro_ts(curr_ts);
+            Swarm::Pose pose_b = traj_b.pose_by_appro_ts(curr_ts);
+            
+            Vector3d pos_a = pose_a.pos();
+            Vector3d pos_b = pose_b.pos();
+            
+            // Calculate motion statistics
+            if (!first_point) {
+                Vector3d delta = pos_a - prev_pos_a;
+                total_xy_motion += std::sqrt(delta.x()*delta.x() + delta.y()*delta.y());
+                total_z_motion += std::abs(delta.z());
+            } else {
+                first_point = false;
+            }
+            prev_pos_a = pos_a;
+            
+            points_a.push_back(pos_a);
+            points_b.push_back(pos_b);
+            common_ts.push_back(curr_ts);
+        }
+        
+        // Check minimum motion threshold
+        if (total_xy_motion < min_xy_motion) {
+            ROS_WARN("Insufficient XY motion (%.3f < %.3f) for reliable alignment", 
+                    total_xy_motion, min_xy_motion);
+            return std::make_pair(false, Swarm::Pose());
+        }
+        
+        // Decide between 2D and 3D alignment
+        bool use_2d = (total_z_motion < min_z_motion);
+        
+        if (use_2d) {
+            ROS_INFO("Using 2D alignment (z_motion: %.3f < %.3f)", total_z_motion, min_z_motion);
+            return std::make_pair(true, align2D(points_a, points_b));
+        } else {
+            ROS_INFO("Using 3D alignment (z_motion: %.3f >= %.3f)", total_z_motion, min_z_motion);
+            return std::make_pair(true, align3D(points_a, points_b));
+        }
+    }
+
+    // Helper function for 2D alignment (x, y, yaw)
+    Swarm::Pose align2D(const std::vector<Vector3d>& points_a, const std::vector<Vector3d>& points_b) {
+        // Compute centroids
+        Vector3d centroid_a = Vector3d::Zero();
+        Vector3d centroid_b = Vector3d::Zero();
+        
+        for (size_t i = 0; i < points_a.size(); i++) {
+            centroid_a += points_a[i];
+            centroid_b += points_b[i];
+        }
+        
+        centroid_a /= points_a.size();
+        centroid_b /= points_b.size();
+        
+        // Center the point clouds and build covariance matrix
+        Eigen::Matrix2d H = Eigen::Matrix2d::Zero();
+        
+        for (size_t i = 0; i < points_a.size(); i++) {
+            Vector2d pa_centered(points_a[i].x() - centroid_a.x(), points_a[i].y() - centroid_a.y());
+            Vector2d pb_centered(points_b[i].x() - centroid_b.x(), points_b[i].y() - centroid_b.y());
+            
+            H += pb_centered * pa_centered.transpose();
+        }
+        
+        // SVD decomposition
+        Eigen::JacobiSVD<Eigen::Matrix2d> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::Matrix2d U = svd.matrixU();
+        Eigen::Matrix2d V = svd.matrixV();
+        
+        // Calculate rotation matrix
+        Eigen::Matrix2d R = V * U.transpose();
+        
+        // Ensure proper rotation (det=1)
+        if (R.determinant() < 0) {
+            V.col(1) = -V.col(1);
+            R = V * U.transpose();
+        }
+        
+        // Convert 2D rotation to yaw angle
+        double yaw = std::atan2(R(1, 0), R(0, 0));
+        
+        // Calculate translation
+        Vector2d t_2d = centroid_a.head<2>() - R * centroid_b.head<2>();
+        
+        // Create transformation as Pose (with only x, y, and yaw)
+        Swarm::Pose transform(Vector3d(t_2d.x(), t_2d.y(), 0), 
+                              Eigen::Quaterniond(Eigen::AngleAxisd(yaw, Vector3d::UnitZ())));
+        return transform;
+    }
+
+    // Helper function for 3D alignment
+    Swarm::Pose align3D(const std::vector<Vector3d>& points_a, const std::vector<Vector3d>& points_b) {
+        // Compute centroids
+        Vector3d centroid_a = Vector3d::Zero();
+        Vector3d centroid_b = Vector3d::Zero();
+        
+        for (size_t i = 0; i < points_a.size(); i++) {
+            centroid_a += points_a[i];
+            centroid_b += points_b[i];
+        }
+        
+        centroid_a /= points_a.size();
+        centroid_b /= points_b.size();
+        
+        // Center the point clouds and build covariance matrix
+        Eigen::Matrix3d H = Eigen::Matrix3d::Zero();
+        
+        for (size_t i = 0; i < points_a.size(); i++) {
+            Vector3d pa_centered = points_a[i] - centroid_a;
+            Vector3d pb_centered = points_b[i] - centroid_b;
+            
+            H += pb_centered * pa_centered.transpose();
+        }
+        
+        // SVD decomposition
+        Eigen::JacobiSVD<Eigen::Matrix3d> svd(H, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::Matrix3d U = svd.matrixU();
+        Eigen::Matrix3d V = svd.matrixV();
+        
+        // Calculate rotation matrix
+        Eigen::Matrix3d R = V * U.transpose();
+        
+        // Ensure proper rotation (det=1)
+        if (R.determinant() < 0) {
+            V.col(2) = -V.col(2);
+            R = V * U.transpose();
+        }
+        
+        // Calculate translation
+        Vector3d t = centroid_a - R * centroid_b;
+        
+        // Create transformation as Pose
+        Swarm::Pose transform(t, Quaterniond(R));
+        
+        return transform;
+    }
 };
 }

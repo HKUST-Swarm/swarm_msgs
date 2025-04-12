@@ -4,7 +4,6 @@
 #include <map>
 #include <vector>
 #include <geometry_msgs/Pose.h>
-#include "lcm_gen/Pose_t.hpp"
 
 using namespace Eigen;
 
@@ -349,19 +348,6 @@ public:
         }
     }
 
-    Pose(const Pose_t & pose_t) {
-        attitude.x() = pose_t.orientation[0];
-        attitude.y() = pose_t.orientation[1];
-        attitude.z() = pose_t.orientation[2];
-        attitude.w() = pose_t.orientation[3];
-
-        position.x() = pose_t.position[0];
-        position.y() = pose_t.position[1];
-        position.z() = pose_t.position[2];
-        update_yaw();
-    }
-
-
     Isometry3d toIsometry() const {
         Isometry3d a = Translation3d(position) * attitude;
         return a;
@@ -383,18 +369,6 @@ public:
         pose.position.x = position.x();
         pose.position.y = position.y();
         pose.position.z = position.z();
-        return pose;
-    }
-
-    Pose_t toLCM() const {
-        Pose_t pose;
-        pose.position[0] = position.x();
-        pose.position[1] = position.y();
-        pose.position[2] = position.z();
-        pose.orientation[0] = attitude.x();
-        pose.orientation[1] = attitude.y();
-        pose.orientation[2] = attitude.z();
-        pose.orientation[3] = attitude.w();
         return pose;
     }
 
